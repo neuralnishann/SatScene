@@ -120,7 +120,7 @@ satellite-scene-agent/
 ├── results/
 │   ├── training_log.json
 │   └── figures/
-├── notebooks/GIS_project_original.ipynb
+├── notebooks/GIS_project_original.ipynb  # original code with explanatory Markdown added
 ├── tests/
 │   ├── test_labels.py
 │   └── test_knowledge_and_log.py
@@ -139,7 +139,7 @@ satellite-scene-agent/
 | Single `analyze()` returning a string | Also `analyze_structured()` with top-3 and a low-confidence flag | Programmatic use |
 | Unused imports (`seaborn`, `confusion_matrix`, …) | Used in `evaluate.py` | — |
 
-The original notebook is kept verbatim in `notebooks/`.
+The notebook code cells are preserved; explanatory Markdown has been added before each code cell. The notes call out the dummy-label, CUDA-only AMP, and class-name lookup limitations in the original code.
 
 ## Known limitations
 
