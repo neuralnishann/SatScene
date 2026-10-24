@@ -2,11 +2,9 @@
 
 # 🛰️ SatScene: Land-Use Scene Classification with ConvNeXt-Tiny and a Rule-Based Decision-Support Agent
 
-[![tests](https://github.com/YOUR-USERNAME/satellite-scene-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/satellite-scene-agent/actions)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![pytorch](https://img.shields.io/badge/PyTorch-timm-ee4c2c)
 ![license](https://img.shields.io/badge/license-MIT-green)
-[![paper](https://img.shields.io/badge/paper-PDF-b31b1b)](paper/main.pdf)
 
 *Geospatial Data Science course · Home Assignment 1 (Software Project) · 2026*
 
@@ -16,7 +14,7 @@
 
 ## Abstract
 
-We fine-tune an ImageNet-22k pre-trained **ConvNeXt-Tiny** (27.83 M parameters) on a small, 14-class overhead-imagery dataset (700 / 200 / 100 images for train / validation / test). The best checkpoint reaches **80.5 % validation accuracy** (95 % Wilson interval 74.5–85.4 %, *n* = 200) while training accuracy saturates at 100 %, i.e. the model over-fits the 700 training images. A thin *perceive → reason → report* **agent** then maps each predicted class to a suggested follow-up geospatial analysis (e.g. NDVI time series for agricultural land). The full write-up, in arXiv style, is in [`paper/main.pdf`](paper/main.pdf).
+We fine-tune an ImageNet-22k pre-trained **ConvNeXt-Tiny** (27.83 M parameters) on a small, 14-class overhead-imagery dataset (700 / 200 / 100 images for train / validation / test). The best checkpoint reaches **80.5 % validation accuracy** (95 % Wilson interval 74.5–85.4 %, *n* = 200) while training accuracy saturates at 100 %, indicating over-fitting on the 700 training images. A rule-based decision-support layer maps each predicted class to a suggested follow-up geospatial analysis. The optional LaTeX write-up is in the local `paper/` folder; that folder is ignored by Git and is not included in repository clones.
 
 > **Read this first — status of the numbers.** The 80.5 % figure comes from the saved output of the original Colab notebook ([`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb)). The **test split has not been evaluated yet**, and the packaged code in `src/` has not been re-run end-to-end on the dataset. See [Known limitations](#known-limitations) and [Reproducing the results](#reproducing-the-results).
 
@@ -63,8 +61,7 @@ Scene labels are **derived** from the detection labels: each image gets its most
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/satellite-scene-agent.git
-cd satellite-scene-agent
+# From the project directory:
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .            # makes `python -m satscene.*` available
@@ -94,30 +91,40 @@ python scripts/make_figures.py
 PYTHONPATH=src pytest -q
 ```
 
-Expect results close to, but not identical with, the logged run: the original was unseeded and the label-derivation cell differs from the saved notebook (see below). Once you have your own numbers, update `results/training_log.json`, re-run `make_figures.py`, and fill the `TODO` in `paper/main.tex`.
+Expect results to differ from the logged run: the notebook run was unseeded, and its saved label-derivation code conflicts with its output. The packaged training code is seeded and derives labels from the YOLO annotations. After obtaining a new run, update `results/training_log.json` if you want the figures to reflect it, then run `python scripts/make_figures.py`.
 
 ## Repository structure
 
 ```
 satellite-scene-agent/
 ├── README.md
-├── paper/                   # arXiv-style report (LaTeX) + compiled PDF
-│   ├── main.tex  references.bib  main.pdf  figures/
+├── .gitignore
+├── CITATION.cff
+├── LICENSE
+├── pyproject.toml
+├── requirements.txt
 ├── src/satscene/
-│   ├── labels.py            # YOLO -> scene-label parsing (pure Python, tested)
-│   ├── data.py              # Dataset, Albumentations pipelines, loaders
-│   ├── model.py             # ConvNeXt-Tiny factory, checkpoint loading
-│   ├── train.py             # training loop (seeded, device-aware AMP)
-│   ├── evaluate.py          # test metrics, Wilson CI, confusion matrix
-│   ├── agent.py  knowledge.py   # perceive -> reason -> report
-│   ├── metrics.py           # Wilson interval
+│   ├── labels.py            # YOLO annotation parsing and class utilities
+│   ├── data.py              # image transforms and data loaders
+│   ├── model.py             # ConvNeXt-Tiny and checkpoint utilities
+│   ├── train.py             # training loop
+│   ├── evaluate.py          # split metrics and confusion matrix
+│   ├── agent.py             # prediction report wrapper
+│   ├── knowledge.py         # class-specific follow-up suggestions
+│   ├── metrics.py           # Wilson confidence interval
 │   └── app.py               # Gradio demo
-├── configs/default.yaml     # all hyper-parameters
-├── scripts/                 # download_data.sh, make_figures.py
-├── results/                 # training_log.json + figures
-├── notebooks/GIS_project_original.ipynb   # original Colab notebook, unmodified
-├── tests/                   # pytest (no GPU / torch needed)
-└── .github/workflows/ci.yml
+├── configs/default.yaml
+├── scripts/
+│   ├── download_data.sh
+│   └── make_figures.py
+├── results/
+│   ├── training_log.json
+│   └── figures/
+├── notebooks/GIS_project_original.ipynb
+├── tests/
+│   ├── test_labels.py
+│   └── test_knowledge_and_log.py
+└── paper/                   # local only; ignored by Git
 ```
 
 ## What changed relative to the original notebook
@@ -154,18 +161,11 @@ The original notebook is kept verbatim in `notebooks/`.
 
 ## Citation
 
-```bibtex
-@misc{yourname2026satscene,
-  author = {YOUR NAME},
-  title  = {Satellite Scene Classification with ConvNeXt-Tiny and a Rule-Based Decision-Support Agent},
-  year   = {2026},
-  howpublished = {\url{https://github.com/YOUR-USERNAME/satellite-scene-agent}}
-}
-```
+Citation metadata is provided in [`CITATION.cff`](CITATION.cff). Replace its author and repository placeholders before publishing or archiving the project.
 
 ## References
 
-Key works (full list in [`paper/references.bib`](paper/references.bib)): ConvNeXt (Liu et al., CVPR 2022, [arXiv:2201.03545](https://arxiv.org/abs/2201.03545)); `timm` (Wightman, 2019); AdamW (Loshchilov & Hutter, ICLR 2019); SGDR cosine annealing (ICLR 2017); Mixed Precision Training (Micikevicius et al., ICLR 2018); Albumentations (Buslaev et al., 2020); EuroSAT, UC Merced, AID, NWPU-RESISC45 benchmarks.
+Key works are cited in the optional paper source under the local `paper/` folder. That folder is ignored by Git, so its bibliography is not present in repository clones.
 
 ## License
 
