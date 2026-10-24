@@ -1,0 +1,27 @@
+{
+  "_provenance": "Transcribed by hand from the saved cell outputs of notebooks/GIS_project_original.ipynb (Colab, GPU). The logged run was unseeded; per-epoch train metrics are measured in train mode with augmentation.",
+  "model": "convnext_tiny.fb_in22k_ft_in1k",
+  "parameters_millions": 27.83,
+  "optimizer": "AdamW(lr=3e-4, weight_decay=1e-4) + CosineAnnealingLR(T_max=10)",
+  "batch_size": 32,
+  "img_size": 224,
+  "epochs": 10,
+  "split_sizes": {"train": 700, "valid": 200, "test": 100},
+  "class_names": ["Agriculture", "Airport", "Beach", "City", "Desert", "Forest", "Grassland", "Highway", "Lake", "Mountain", "Parking", "Port", "Railway", "River"],
+  "train_class_distribution": {"City": 118, "Forest": 63, "Grassland": 61, "Desert": 60, "Agriculture": 58, "Port": 51, "Mountain": 51, "Airport": 47, "Parking": 46, "Beach": 44, "Highway": 36, "Lake": 27, "Railway": 22, "River": 16},
+  "history": [
+    {"epoch": 1,  "train_loss": 1.6283, "train_acc": 49.57,  "val_acc": 70.50},
+    {"epoch": 2,  "train_loss": 0.7454, "train_acc": 75.43,  "val_acc": 70.50},
+    {"epoch": 3,  "train_loss": 0.4508, "train_acc": 85.29,  "val_acc": 76.00},
+    {"epoch": 4,  "train_loss": 0.2636, "train_acc": 91.29,  "val_acc": 77.00},
+    {"epoch": 5,  "train_loss": 0.1367, "train_acc": 96.14,  "val_acc": 76.50},
+    {"epoch": 6,  "train_loss": 0.0906, "train_acc": 97.57,  "val_acc": 77.50},
+    {"epoch": 7,  "train_loss": 0.0425, "train_acc": 99.43,  "val_acc": 80.50},
+    {"epoch": 8,  "train_loss": 0.0250, "train_acc": 99.86,  "val_acc": 79.00},
+    {"epoch": 9,  "train_loss": 0.0189, "train_acc": 100.00, "val_acc": 80.00},
+    {"epoch": 10, "train_loss": 0.0140, "train_acc": 100.00, "val_acc": 80.50}
+  ],
+  "best_val_acc": 80.5,
+  "best_epoch": 7,
+  "test_metrics": null
+}

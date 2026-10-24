@@ -1,0 +1,12 @@
+torch>=2.1
+timm>=0.9
+albumentations>=1.4
+opencv-python-headless>=4.8
+numpy
+scikit-learn
+matplotlib
+seaborn
+pyyaml
+tqdm
+gradio>=4.0
+kaggle

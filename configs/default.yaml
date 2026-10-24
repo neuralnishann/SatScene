@@ -1,0 +1,19 @@
+# Hyper-parameters copied from the original notebook (GIS_project.ipynb).
+seed: 42            # NOTE: the original logged run was not seeded
+data:
+  root: data/Remote Sensing Data.v2i.yolov8
+  img_size: 224
+  val_split: valid
+model:
+  name: convnext_tiny.fb_in22k_ft_in1k
+  pretrained: true
+train:
+  epochs: 10
+  batch_size: 32
+  num_workers: 2
+  class_weighted_loss: false   # set true to counter the 118:16 City:River imbalance
+optim:
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+output:
+  dir: runs/convnext_tiny
