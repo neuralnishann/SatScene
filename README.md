@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🛰️ Satellite Scene Agent
+# 🛰️ Satellite Scene Agents
 
-**Land-use scene classification with ConvNeXt-Tiny and a rule-based decision-support agent**
+**SatScene: Land-Use Scene Classification with ConvNeXt-Tiny and a Rule-Based Decision-Support Agen**
 
 [![tests](https://github.com/YOUR-USERNAME/satellite-scene-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/satellite-scene-agent/actions)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
@@ -25,7 +25,7 @@ We fine-tune an ImageNet-22k pre-trained **ConvNeXt-Tiny** (27.83 M parameters) 
 ## Results at a glance
 
 | | Value |
-|---|---|
+| --- | --- |
 | Backbone | `convnext_tiny.fb_in22k_ft_in1k` (timm), 27.83 M params |
 | Data | 14 classes · 700 train / 200 val / 100 test |
 | Best checkpoint | epoch 7 of 10 |
@@ -46,7 +46,7 @@ Caveats that matter when reading these numbers: validation data was used to sele
 ## Method in brief
 
 | Component | Choice |
-|---|---|
+| --- | --- |
 | Input | RGB, resized to 224 × 224, ImageNet mean/std |
 | Augmentation | horizontal flip, vertical flip, random 90° rotation (p = 0.5 each) |
 | Loss / optimiser | cross-entropy · AdamW (lr 3e-4, wd 1e-4) |
@@ -125,7 +125,7 @@ satellite-scene-agent/
 ## What changed relative to the original notebook
 
 | Notebook | This repo | Why |
-|---|---|---|
+| --- | --- | --- |
 | Data cell assigns `class_names[0]` to **every** image ("dummy labels"), yet its saved output says *"Parsed true classes"* with a 14-class distribution | Real label parsing in `labels.py`, with unit tests | The saved code and saved output disagree; the logged results must have come from a different version of that cell |
 | Agent knowledge table keyed on `"agricultural"`, `"terminal"`, `"car parking"`, `"road"`, `"train"`, `"domestic"` … | Keys equal the 14 dataset class names; a test asserts full coverage | 6 of 14 classes (Agriculture, Airport, Grassland, Highway, Parking, Railway) would have returned *"Unknown Land Use"*; Grassland had no entry |
 | `GradScaler('cuda')` / `device_type='cuda'` hard-coded | Device-aware AMP | Crashes on CPU otherwise |
