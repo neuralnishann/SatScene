@@ -1,8 +1,6 @@
 <div align="center">
 
-# 🛰️ Satellite Scene Agents
-
-**SatScene: Land-Use Scene Classification with ConvNeXt-Tiny and a Rule-Based Decision-Support Agen**
+# 🛰️ SatScene: Land-Use Scene Classification with ConvNeXt-Tiny and a Rule-Based Decision-Support Agent
 
 [![tests](https://github.com/YOUR-USERNAME/satellite-scene-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/satellite-scene-agent/actions)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
