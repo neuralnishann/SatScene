@@ -1,0 +1,81 @@
+{
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.792172680582319,
+      "lr": 0.0003,
+      "val_loss": 1.4281222867965697,
+      "val_acc": 55.00000000000001,
+      "val_macro_f1": 0.5156319960666528,
+      "val_balanced_acc": 0.5469286442970654
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.0554483842849731,
+      "lr": 0.0002713525491562421,
+      "val_loss": 1.2557373762130737,
+      "val_acc": 58.5,
+      "val_macro_f1": 0.5521793835515609,
+      "val_balanced_acc": 0.5920510882916898
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.731178743498666,
+      "lr": 0.0001963525491562421,
+      "val_loss": 0.9105097031593323,
+      "val_acc": 75.5,
+      "val_macro_f1": 0.7381587942540847,
+      "val_balanced_acc": 0.7259932712470307
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.532946578519685,
+      "lr": 0.00010364745084375788,
+      "val_loss": 0.8622696876525879,
+      "val_acc": 75.5,
+      "val_macro_f1": 0.7229224702060832,
+      "val_balanced_acc": 0.7129919503039804
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.33203818355287823,
+      "lr": 2.8647450843757894e-05,
+      "val_loss": 0.8090343248844146,
+      "val_acc": 78.5,
+      "val_macro_f1": 0.7660504019964495,
+      "val_balanced_acc": 0.7630623244814975
+    }
+  ],
+  "best_epoch": 5,
+  "best_score": 0.7660504019964495,
+  "selection_metric": "val_macro_f1",
+  "seconds": 296.1292562484741,
+  "config": {
+    "model_name": "swinv2_tiny_window8_256.ms_in1k",
+    "pretrained": true,
+    "seed": 42,
+    "img_size": 256,
+    "epochs": 5,
+    "batch_size": 16,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "selection_metric": "val_macro_f1",
+    "class_names": [
+      "Agriculture",
+      "Airport",
+      "Beach",
+      "City",
+      "Desert",
+      "Forest",
+      "Grassland",
+      "Highway",
+      "Lake",
+      "Mountain",
+      "Parking",
+      "Port",
+      "Railway",
+      "River"
+    ],
+    "data_root": "/Users/neuralnishan/HSE Education/Semester 1 /Geospatial Data Science 6 ECTS/_HA1/SatScene/data/Remote Sensing Data.v2i.yolov8"
+  }
+}

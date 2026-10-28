@@ -1,0 +1,28 @@
+{
+  "model_name": "swinv2_tiny_window8_256.ms_in1k",
+  "pretrained": true,
+  "seed": 42,
+  "img_size": 256,
+  "epochs": 5,
+  "batch_size": 16,
+  "learning_rate": 0.0003,
+  "weight_decay": 0.0001,
+  "selection_metric": "val_macro_f1",
+  "class_names": [
+    "Agriculture",
+    "Airport",
+    "Beach",
+    "City",
+    "Desert",
+    "Forest",
+    "Grassland",
+    "Highway",
+    "Lake",
+    "Mountain",
+    "Parking",
+    "Port",
+    "Railway",
+    "River"
+  ],
+  "data_root": "/Users/neuralnishan/HSE Education/Semester 1 /Geospatial Data Science 6 ECTS/_HA1/SatScene/data/Remote Sensing Data.v2i.yolov8"
+}
