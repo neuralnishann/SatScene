@@ -66,6 +66,12 @@ Press Control-C in Terminal to stop the server.
 ```bash
 python -m satscene.desktop --config configs/default.yaml \
   --checkpoint runs/convnext_tiny/best_model.pth
+
+python -m satscene.desktop --config configs/default.yaml \
+  --checkpoint runs/dinov2_vit_small_patch14/best_model.pth
+
+python -m satscene.desktop --config configs/default.yaml \
+  --checkpoint runs/swinv2_tiny_window8/best_model.pth
 ```
 
 The native Cocoa app opens a desktop window directly. Select or drop an image to start
