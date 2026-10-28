@@ -1,0 +1,109 @@
+{
+  "split": "test",
+  "n": 100,
+  "accuracy": 0.06,
+  "accuracy_ci95": [
+    0.02778574526665662,
+    0.12476968531222507
+  ],
+  "cross_entropy_loss": 11.982221450805664,
+  "balanced_accuracy": 0.07142857142857142,
+  "macro_f1": 0.008086253369272238,
+  "weighted_f1": 0.00679245283018868,
+  "top_3_accuracy": 0.14,
+  "ece_top_label": 0.9399602925777435,
+  "multiclass_brier_score": 1.8799198872353509,
+  "per_class": {
+    "Agriculture": {
+      "precision": 0.06,
+      "recall": 1.0,
+      "f1-score": 0.11320754716981132,
+      "support": 6.0
+    },
+    "Airport": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "Beach": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 10.0
+    },
+    "City": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 13.0
+    },
+    "Desert": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 13.0
+    },
+    "Forest": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 8.0
+    },
+    "Grassland": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 10.0
+    },
+    "Highway": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 4.0
+    },
+    "Lake": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 2.0
+    },
+    "Mountain": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 9.0
+    },
+    "Parking": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 9.0
+    },
+    "Port": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 8.0
+    },
+    "Railway": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 4.0
+    },
+    "River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 1.0
+    }
+  },
+  "calibration_bins": [
+    {
+      "confidence": 0.9999602925777435,
+      "accuracy": 0.06,
+      "count": 100
+    }
+  ]
+}

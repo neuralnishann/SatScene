@@ -7,15 +7,20 @@ name = "satscene"
 version = "0.1.0"
 description = "Satellite scene classification (ConvNeXt-Tiny) with a rule-based agent layer"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
   "torch>=2.1", "timm>=0.9", "albumentations>=1.4", "opencv-python-headless>=4.8",
-  "numpy", "scikit-learn", "matplotlib", "seaborn", "pyyaml", "tqdm", "gradio>=4.0",
+  "numpy", "scikit-learn", "matplotlib", "seaborn", "pyyaml", "tqdm", "gradio>=4.0", "pillow>=9",
+  "pyobjc-framework-Cocoa>=10; sys_platform == 'darwin'",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest"]
+
+[project.scripts]
+satscene = "satscene.app:main"
+satscene-desktop = "satscene.desktop:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

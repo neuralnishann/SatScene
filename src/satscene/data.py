@@ -1,11 +1,16 @@
 """Torch dataset, Albumentations pipelines and DataLoaders."""
 from __future__ import annotations
 
+import os
 from typing import Sequence, Tuple
+
+# This package update check makes an optional network request during import.
+os.environ.setdefault("NO_ALBUMENTATIONS_UPDATE", "1")
 
 import albumentations as A
 import cv2
 from albumentations.pytorch import ToTensorV2
+import torch
 from torch.utils.data import DataLoader, Dataset
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
@@ -43,6 +48,23 @@ class SceneDataset(Dataset):
         return image, self.labels[idx]
 
 
-def make_loader(paths, labels, img_size, batch_size, train, num_workers=2) -> DataLoader:
+def make_loader(
+    paths,
+    labels,
+    img_size,
+    batch_size,
+    train,
+    num_workers=2,
+    pin_memory=None,
+) -> DataLoader:
+    if pin_memory is None:
+        # Pinned host memory speeds CUDA transfers; MPS does not support it.
+        pin_memory = torch.cuda.is_available()
     ds = SceneDataset(paths, labels, build_transforms(img_size, train=train))
-    return DataLoader(ds, batch_size=batch_size, shuffle=train, num_workers=num_workers, pin_memory=True)
+    return DataLoader(
+        ds,
+        batch_size=batch_size,
+        shuffle=train,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+    )

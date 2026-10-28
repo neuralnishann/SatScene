@@ -9,4 +9,6 @@ seaborn
 pyyaml
 tqdm
 gradio>=4.0
+pillow>=9
+pyobjc-framework-Cocoa>=10; sys_platform == "darwin"
 kaggle

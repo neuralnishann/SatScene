@@ -14,9 +14,9 @@
 
 ## Abstract
 
-We fine-tune an ImageNet-22k pre-trained **ConvNeXt-Tiny** (27.83 M parameters) on a small, 14-class overhead-imagery dataset (700 / 200 / 100 images for train / validation / test). The best checkpoint reaches **80.5 % validation accuracy** (95 % Wilson interval 74.5–85.4 %, *n* = 200) while training accuracy saturates at 100 %, indicating over-fitting on the 700 training images. A rule-based decision-support layer maps each predicted class to a suggested follow-up geospatial analysis. The optional LaTeX write-up is in the local `paper/` folder; that folder is ignored by Git and is not included in repository clones.
+We fine-tune ImageNet-pretrained **ConvNeXt-Tiny** on a 14-class overhead-imagery dataset and provide a local image-classification GUI with rule-based follow-up suggestions. A packaged seeded run selected by validation macro-F1 reached **77.5 % validation accuracy** and **0.761 validation macro-F1**. Its saved held-out test evaluation failed badly: **6 % accuracy**, **0.008 macro-F1**, and every test image was predicted as Agriculture with near-certain confidence. This project is a working software implementation, but the classifier is not currently suitable for use. The optional LaTeX report is in the local `paper/` folder; it is ignored by Git and must be included manually in the submission archive.
 
-> **Read this first — status of the numbers.** The 80.5 % figure comes from the saved output of the original Colab notebook ([`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb)). The **test split has not been evaluated yet**, and the packaged code in `src/` has not been re-run end-to-end on the dataset. See [Known limitations](#known-limitations) and [Reproducing the results](#reproducing-the-results).
+> **Read this first — status of the numbers.** The 80.5 % result below is historical notebook output and is unverified because saved notebook code and output disagree. The packaged pipeline has been run locally: `runs/convnext_tiny/history.json` records a seeded run with 77.5 % validation accuracy and 0.761 validation macro-F1. `runs/convnext_tiny/metrics_test.json` records a test failure (6 % accuracy; all 100 predictions are Agriculture). Do not describe the held-out result as successful. See [Known limitations](#known-limitations).
 
 ## Results at a glance
 
@@ -24,10 +24,12 @@ We fine-tune an ImageNet-22k pre-trained **ConvNeXt-Tiny** (27.83 M parameters) 
 | --- | --- |
 | Backbone | `convnext_tiny.fb_in22k_ft_in1k` (timm), 27.83 M params |
 | Data | 14 classes · 700 train / 200 val / 100 test |
-| Best checkpoint | epoch 7 of 10 |
-| **Validation accuracy** | **80.5 %** (161/200; 95 % CI 74.5–85.4 %) |
-| Final train accuracy | 100 % (augmented, train mode) → 19.5 pp train–val gap |
-| **Test accuracy** | *not yet evaluated* → run `python -m satscene.evaluate --split test` |
+| Historical notebook checkpoint | epoch 7 of 10 (unverified) |
+| Packaged checkpoint | epoch 4 of 10 |
+| Historical notebook validation accuracy | 80.5 % (unverified notebook output) |
+| Packaged run validation accuracy | 77.5 % (155/200; 95 % Wilson CI 71.2–82.7 %) |
+| Packaged run validation macro-F1 | 0.761 (checkpoint selected by macro-F1) |
+| **Saved held-out test accuracy** | **6 % (6/100)**; every prediction is Agriculture |
 
 <p align="center">
   <img src="results/figures/training_curves.png" width="760" alt="Training loss and accuracy curves">
@@ -37,7 +39,7 @@ We fine-tune an ImageNet-22k pre-trained **ConvNeXt-Tiny** (27.83 M parameters) 
   <img src="results/figures/class_distribution.png" width="760" alt="Training-set class distribution">
 </p>
 
-Caveats that matter when reading these numbers: validation data was used to select the checkpoint (so 80.5 % is optimistic), the run was single and unseeded (no variance estimate), and per-class metrics were not logged.
+Caveats: this is one training run; the test performance collapses despite reasonable validation metrics. The cause is not established. The test result has not been used to tune the model.
 
 ## Method in brief
 
@@ -48,7 +50,7 @@ Caveats that matter when reading these numbers: validation data was used to sele
 | Loss / optimiser | cross-entropy · AdamW (lr 3e-4, wd 1e-4) |
 | Schedule | 10 epochs, batch 32, cosine annealing (`T_max = 10`) |
 | Precision | fp16 mixed precision with loss scaling (CUDA only) |
-| Model selection | save weights on strictly better validation accuracy |
+| Model selection | new packaged runs select by validation macro-F1 (configurable); historical notebook checkpoint used accuracy |
 
 **Agent layer** (`src/satscene/agent.py`): (1) *perceive* — softmax over the 14 classes; (2) *reason* — look up the predicted class in a static knowledge table ([`knowledge.py`](src/satscene/knowledge.py)); (3) *report* — markdown with top-3 classes, a suggested follow-up analysis, and a low-confidence flag (< 0.5). It is a rule-based decision-support layer: the suggestions are for a human analyst and nothing is executed.
 
@@ -67,31 +69,75 @@ pip install -r requirements.txt
 pip install -e .            # makes `python -m satscene.*` available
 ```
 
-A CUDA GPU is recommended; the code also runs on CPU (slowly, without mixed precision).
+On Apple Silicon, PyTorch uses the MPS backend automatically when available; Intel Macs
+and other machines use CPU. CUDA is used when available. Python 3.11 is the recommended
+version for the dependency set. See [the Mac setup guide](docs/MAC_SETUP.md) for a clean
+installation and first-run walkthrough.
 
 ## Reproducing the results
 
-```bash
-# 1. data (needs Kaggle credentials: ~/.kaggle/kaggle.json or KAGGLE_USERNAME/KAGGLE_KEY)
-bash scripts/download_data.sh
+### Compare recent vision models in Google Colab
 
-# 2. train (hyper-parameters in configs/default.yaml)
+Open [`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb) in Colab or local Jupyter and run its model-comparison workflow. Keep the project source (`src/satscene/`) available; in Colab, the notebook mounts Drive and checks `MyDrive/SatScene`. Step 1 searches common `data/`, `dataset/`, and `datasets/` paths for an existing YOLO export, then downloads [`umeradnaan/remote-sensing-satellite-images`](https://www.kaggle.com/datasets/umeradnaan/remote-sensing-satellite-images) into the project if needed. Kaggle credentials may be required: add a `KAGGLE_API_TOKEN` Colab secret or configure the Kaggle CLI locally. Set `SATSCENE_DATASET_DIR` to use a dataset in a custom location.
+
+On Apple Silicon, Step 2 selects MPS when PyTorch reports it available, uses batch size 8 and zero loader workers by default, and clears MPS cache between models. Lower the batch size to 4 if memory pressure occurs. Check the printed device before training; it should say `mps` on the Mac. The notebook fine-tunes ConvNeXtV2-Tiny, SwinV2-Tiny, and DINOv2 ViT-S/14 sequentially. Each model saves its best validation-macro-F1 weights and its own configuration, history, and metrics:
+
+- `runs/convnextv2_tiny/best_model.pth`
+- `runs/swinv2_tiny_window8/best_model.pth`
+- `runs/dinov2_vit_small_patch14/best_model.pth`
+
+The notebook saves one cross-model training-loss graph, one cross-model validation-accuracy graph, full validation reports, and a ZIP of the three runs. It does not use the test split for model selection.
+
+Run these commands in Terminal from the project root. The module commands (`python -m …`)
+are important: do not launch `src/satscene/app.py` as a file, because that bypasses the
+installed `satscene` package imports.
+
+```bash
+# 1. Open the project and activate its environment
+cd "/path/to/SatScene"
+source .venv/bin/activate
+
+# 2. Install dependencies and the local package (first setup, or after dependency changes)
+python -m pip install -r requirements.txt
+python -m pip install -e .
+
+# 3. Data is already in data/ in this checkout; download only if data.yaml is absent.
+#    Kaggle credentials required for download: ~/.kaggle/kaggle.json or KAGGLE_USERNAME/KAGGLE_KEY
+if [ ! -f "data/Remote Sensing Data.v2i.yolov8/data.yaml" ]; then bash scripts/download_data.sh; fi
+
+# 4. Train a fresh checkpoint (uses MPS on supported Apple Silicon Macs)
 python -m satscene.train --config configs/default.yaml
 #    -> runs/convnext_tiny/best_model.pth and history.json
 
-# 3. evaluate ONCE on the held-out test split
-python -m satscene.evaluate --config configs/default.yaml --split test
-#    -> runs/convnext_tiny/metrics_test.json and confusion_test.png
+# 5. Make training curves
+python scripts/plot_training_history.py runs/convnext_tiny/history.json
+#    -> runs/convnext_tiny/training_curves.png
 
-# 4. interactive demo
-python -m satscene.app --config configs/default.yaml        # add --share for a public link
+# 6. Evaluate the selected checkpoint ONCE on the held-out test set
+python -m satscene.evaluate --config configs/default.yaml --split test \
+  --checkpoint runs/convnext_tiny/best_model.pth
+#    -> metrics_test.json, predictions_test.csv, and confusion_test.png under runs/convnext_tiny/
 
-# 5. regenerate figures from the logged run, and run the tests
-python scripts/make_figures.py
-PYTHONPATH=src pytest -q
+# 7. Run the browser GUI at http://127.0.0.1:7860
+python -m satscene.app --config configs/default.yaml \
+  --checkpoint runs/convnext_tiny/best_model.pth
+
+# Optional: run the native macOS desktop app
+python -m satscene.desktop --config configs/default.yaml \
+  --checkpoint runs/convnext_tiny/best_model.pth
+
+# Optional: run the repository tests (install with `python -m pip install -e '.[dev]'` first)
+python -m pytest -q
 ```
 
-Expect results to differ from the logged run: the notebook run was unseeded, and its saved label-derivation code conflicts with its output. The packaged training code is seeded and derives labels from the YOLO annotations. After obtaining a new run, update `results/training_log.json` if you want the figures to reflect it, then run `python scripts/make_figures.py`.
+The saved packaged checkpoint at `runs/convnext_tiny/best_model.pth` also predicts
+Agriculture for every image in the held-out test split despite 77.5 % validation accuracy.
+Treat this as an unresolved generalization failure. If the data is already present, skip
+the download step.
+
+For plots from a new packaged training run, use `python scripts/plot_training_history.py runs/convnext_tiny/history.json`. Final evaluation writes metrics, per-image predictions, and a multi-panel confusion, per-class F1, and calibration figure. See [the experiment plan](docs/EXPERIMENT_PLAN.md) for a step-by-step protocol, metric definitions, and a seven-minute presentation outline.
+
+Expect results to differ from the logged run: the notebook run was unseeded, and its saved label-derivation code conflicts with its output. The packaged training code is seeded and derives labels from the YOLO annotations. Newly trained checkpoints also store the class order, model name, and input size, so the GUI can use them without the dataset being present. After obtaining a new run, update `results/training_log.json` if you want the figures to reflect it, then run `python scripts/make_figures.py`.
 
 ## Repository structure
 
@@ -108,15 +154,20 @@ satellite-scene-agent/
 │   ├── data.py              # image transforms and data loaders
 │   ├── model.py             # ConvNeXt-Tiny and checkpoint utilities
 │   ├── train.py             # training loop
-│   ├── evaluate.py          # split metrics and confusion matrix
+│   ├── evaluate.py          # metrics, predictions, confusion and calibration plots
 │   ├── agent.py             # prediction report wrapper
 │   ├── knowledge.py         # class-specific follow-up suggestions
 │   ├── metrics.py           # Wilson confidence interval
-│   └── app.py               # Gradio demo
+│   ├── app.py               # Gradio browser demo
+│   └── desktop.py           # native macOS Cocoa desktop GUI
 ├── configs/default.yaml
 ├── scripts/
 │   ├── download_data.sh
-│   └── make_figures.py
+│   ├── make_figures.py
+│   └── plot_training_history.py
+├── docs/
+│   ├── MAC_SETUP.md
+│   └── EXPERIMENT_PLAN.md
 ├── results/
 │   ├── training_log.json
 │   └── figures/
@@ -143,17 +194,18 @@ The notebook code cells are preserved; explanatory Markdown has been added befor
 
 ## Known limitations
 
-- **No test result yet**, and `src/` has not been re-run against the real dataset; the reported numbers are transcribed from the notebook's saved output.
-- **Validation-selected checkpoint**: 80.5 % is optimistically biased; with 200 images, differences of a few points are within noise.
-- **Single unseeded run**, so no variance across seeds. The confidence interval only reflects validation-set sampling noise.
-- **Over-fitting**: 100 % train vs ~80 % validation accuracy; the validation curve is flat after epoch 4.
-- **Class imbalance** (City 118 vs River 16, 7.4 : 1) and no per-class metrics logged. Weighted loss is available via `class_weighted_loss: true` but untested.
+- **Severe validation/test gap:** packaged evaluation scored 77.5 % validation accuracy but only 6 % test accuracy; every test prediction is Agriculture. The cause has not been established.
+- **Historical notebook result is unverified:** its saved code assigns dummy labels while saved output claims 14-class labels.
+- **Validation-selected checkpoint**: 77.5 % is a model-selection result, not an unbiased final estimate; the held-out test result is much worse.
+- **Single packaged run**, so no variance across seeds. The validation confidence interval reflects sampling uncertainty only.
+- **Over-fitting**: packaged training accuracy reaches 89.6 % by its best epoch vs 77.5 % validation accuracy; test performance is substantially worse.
+- **Class imbalance** (City 118 vs River 16, 7.4 : 1). The original logged run has no per-class metrics; the packaged evaluator now reports them. Weighted loss is available via `class_weighted_loss: true` but still needs an ablation run.
 - **Derived labels** from detection boxes may be noisy for mixed scenes; no check for near-duplicates across splits; sensor, resolution and dates unknown.
 - **Not georeferenced**: no CRS or spectral bands, so no spatial cross-validation and no real NDVI. The agent's follow-ups are suggestions only.
 
 ## Roadmap
 
-- [ ] Evaluate on the test split; add confusion matrix and per-class F1 to the paper
+- [x] Run the packaged pipeline and evaluate once on the test split; the result is a severe all-Agriculture failure and must be investigated without tuning on test data
 - [ ] Multi-seed runs (mean ± std)
 - [ ] Ablations: class-weighted loss, stronger augmentation, label smoothing, TTA
 - [ ] Near-duplicate audit across splits
@@ -161,7 +213,7 @@ The notebook code cells are preserved; explanatory Markdown has been added befor
 
 ## Citation
 
-Citation metadata is provided in [`CITATION.cff`](CITATION.cff). Replace its author and repository placeholders before publishing or archiving the project.
+Citation metadata is provided in [`CITATION.cff`](CITATION.cff). Add a repository URL before publishing or archiving the project.
 
 ## References
 
