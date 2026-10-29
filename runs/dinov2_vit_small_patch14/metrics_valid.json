@@ -2,66 +2,66 @@
   "model": "vit_small_patch14_dinov2.lvd142m",
   "split": "valid",
   "n": 200,
-  "accuracy": 0.32,
+  "accuracy": 0.38,
   "accuracy_ci95": [
-    0.2592642960770526,
-    0.38752026605354306
+    0.3155889366123922,
+    0.4489341048080049
   ],
-  "cross_entropy_loss": 2.2022375679016113,
-  "balanced_accuracy": 0.24616445795957073,
-  "macro_precision": 0.25289162274288135,
-  "macro_recall": 0.24616445795957073,
-  "macro_f1": 0.2218804192798923,
-  "micro_precision": 0.32,
-  "micro_recall": 0.32,
-  "micro_f1": 0.32,
-  "weighted_precision": 0.2893528779255324,
-  "weighted_recall": 0.32,
-  "weighted_f1": 0.269046859552874,
-  "top_3_accuracy": 0.555,
-  "ece_top_label": 0.08541382730007169,
-  "multiclass_brier_score": 0.8261926625413565,
+  "cross_entropy_loss": 1.873870153427124,
+  "balanced_accuracy": 0.3440658031823446,
+  "macro_precision": 0.3079575305195391,
+  "macro_recall": 0.3440658031823446,
+  "macro_f1": 0.30490751843236313,
+  "micro_precision": 0.38,
+  "micro_recall": 0.38,
+  "micro_f1": 0.38,
+  "weighted_precision": 0.34640552225288945,
+  "weighted_recall": 0.38,
+  "weighted_f1": 0.34224797204036334,
+  "top_3_accuracy": 0.69,
+  "ece_top_label": 0.10265422463417052,
+  "multiclass_brier_score": 0.7488198983549867,
   "per_class": {
     "Agriculture": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
+      "precision": 0.35294117647058826,
+      "recall": 0.4,
+      "f1-score": 0.375,
       "support": 15
     },
     "Airport": {
-      "precision": 0.6666666666666666,
+      "precision": 0.3333333333333333,
       "recall": 0.3333333333333333,
-      "f1-score": 0.4444444444444444,
+      "f1-score": 0.3333333333333333,
       "support": 12
     },
     "Beach": {
       "precision": 0.5,
-      "recall": 0.6666666666666666,
-      "f1-score": 0.5714285714285714,
+      "recall": 0.8888888888888888,
+      "f1-score": 0.64,
       "support": 9
     },
     "City": {
-      "precision": 0.29347826086956524,
-      "recall": 0.7297297297297297,
-      "f1-score": 0.4186046511627907,
+      "precision": 0.3548387096774194,
+      "recall": 0.5945945945945946,
+      "f1-score": 0.4444444444444444,
       "support": 37
     },
     "Desert": {
-      "precision": 0.8461538461538461,
-      "recall": 0.6875,
-      "f1-score": 0.7586206896551724,
+      "precision": 0.8333333333333334,
+      "recall": 0.625,
+      "f1-score": 0.7142857142857143,
       "support": 16
     },
     "Forest": {
-      "precision": 0.09090909090909091,
-      "recall": 0.4,
-      "f1-score": 0.14814814814814814,
+      "precision": 0.16666666666666666,
+      "recall": 0.6,
+      "f1-score": 0.2608695652173913,
       "support": 10
     },
     "Grassland": {
-      "precision": 0.42105263157894735,
-      "recall": 0.38095238095238093,
-      "f1-score": 0.4,
+      "precision": 0.5625,
+      "recall": 0.42857142857142855,
+      "f1-score": 0.4864864864864865,
       "support": 21
     },
     "Highway": {
@@ -77,21 +77,21 @@
       "support": 10
     },
     "Mountain": {
-      "precision": 0.2222222222222222,
+      "precision": 0.18181818181818182,
       "recall": 0.10526315789473684,
-      "f1-score": 0.14285714285714285,
+      "f1-score": 0.13333333333333333,
       "support": 19
     },
     "Parking": {
-      "precision": 0.5,
-      "recall": 0.14285714285714285,
-      "f1-score": 0.2222222222222222,
+      "precision": 0.5714285714285714,
+      "recall": 0.2857142857142857,
+      "f1-score": 0.38095238095238093,
       "support": 14
     },
     "Port": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
+      "precision": 0.45454545454545453,
+      "recall": 0.5555555555555556,
+      "f1-score": 0.5,
       "support": 9
     },
     "Railway": {
@@ -109,49 +109,49 @@
   },
   "calibration_bins": [
     {
-      "confidence": 0.17120609590501495,
-      "accuracy": 0.2727272727272727,
-      "count": 33
+      "confidence": 0.16118964552879333,
+      "accuracy": 1.0,
+      "count": 1
     },
     {
-      "confidence": 0.25199597009590696,
-      "accuracy": 0.30612244897959184,
-      "count": 98
+      "confidence": 0.2531179079883977,
+      "accuracy": 0.18421052631578946,
+      "count": 38
     },
     {
-      "confidence": 0.3373373609322768,
-      "accuracy": 0.23076923076923078,
-      "count": 52
+      "confidence": 0.35522721598788004,
+      "accuracy": 0.21951219512195122,
+      "count": 41
     },
     {
-      "confidence": 0.4111338059107463,
-      "accuracy": 0.3333333333333333,
+      "confidence": 0.4481253234609481,
+      "accuracy": 0.3709677419354839,
+      "count": 62
+    },
+    {
+      "confidence": 0.540658201860345,
+      "accuracy": 0.43478260869565216,
+      "count": 23
+    },
+    {
+      "confidence": 0.6368337188448224,
+      "accuracy": 0.5714285714285714,
+      "count": 14
+    },
+    {
+      "confidence": 0.7207639813423157,
+      "accuracy": 1.0,
       "count": 3
     },
     {
-      "confidence": 0.5308929085731506,
+      "confidence": 0.8674641762460981,
+      "accuracy": 0.5714285714285714,
+      "count": 7
+    },
+    {
+      "confidence": 0.9577545306899331,
       "accuracy": 1.0,
-      "count": 1
-    },
-    {
-      "confidence": 0.6232033967971802,
-      "accuracy": 1.0,
-      "count": 1
-    },
-    {
-      "confidence": 0.7719265222549438,
-      "accuracy": 0.0,
-      "count": 1
-    },
-    {
-      "confidence": 0.8087195158004761,
-      "accuracy": 0.5,
-      "count": 2
-    },
-    {
-      "confidence": 0.9535601933797201,
-      "accuracy": 1.0,
-      "count": 9
+      "count": 11
     }
   ]
 }

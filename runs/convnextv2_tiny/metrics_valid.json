@@ -2,36 +2,36 @@
   "model": "convnextv2_tiny.fcmae_ft_in1k",
   "split": "valid",
   "n": 200,
-  "accuracy": 0.765,
+  "accuracy": 0.8,
   "accuracy_ci95": [
-    0.7015850701327535,
-    0.8184265467305365
+    0.7391436038882958,
+    0.8495487925607118
   ],
-  "cross_entropy_loss": 0.8084645748138428,
-  "balanced_accuracy": 0.7359643313120757,
-  "macro_precision": 0.775659176714164,
-  "macro_recall": 0.7359643313120757,
-  "macro_f1": 0.7428950553455282,
-  "micro_precision": 0.765,
-  "micro_recall": 0.765,
-  "micro_f1": 0.765,
-  "weighted_precision": 0.7865356990622335,
-  "weighted_recall": 0.765,
-  "weighted_f1": 0.7635535292758066,
-  "top_3_accuracy": 0.935,
-  "ece_top_label": 0.07155524536967274,
-  "multiclass_brier_score": 0.3515197345272145,
+  "cross_entropy_loss": 0.7796294689178467,
+  "balanced_accuracy": 0.7876329373509826,
+  "macro_precision": 0.8007165570190781,
+  "macro_recall": 0.7876329373509826,
+  "macro_f1": 0.7880702552938542,
+  "micro_precision": 0.8,
+  "micro_recall": 0.8,
+  "micro_f1": 0.8,
+  "weighted_precision": 0.8003667704844176,
+  "weighted_recall": 0.8,
+  "weighted_f1": 0.7930899143069413,
+  "top_3_accuracy": 0.94,
+  "ece_top_label": 0.11759249120950699,
+  "multiclass_brier_score": 0.31914426107452015,
   "per_class": {
     "Agriculture": {
-      "precision": 0.9166666666666666,
-      "recall": 0.7333333333333333,
-      "f1-score": 0.8148148148148148,
+      "precision": 0.8235294117647058,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.875,
       "support": 15
     },
     "Airport": {
-      "precision": 0.6,
+      "precision": 0.6923076923076923,
       "recall": 0.75,
-      "f1-score": 0.6666666666666666,
+      "f1-score": 0.72,
       "support": 12
     },
     "Beach": {
@@ -41,45 +41,45 @@
       "support": 9
     },
     "City": {
-      "precision": 0.7391304347826086,
+      "precision": 0.7727272727272727,
       "recall": 0.918918918918919,
-      "f1-score": 0.8192771084337349,
+      "f1-score": 0.8395061728395061,
       "support": 37
     },
     "Desert": {
-      "precision": 1.0,
-      "recall": 0.6875,
-      "f1-score": 0.8148148148148148,
+      "precision": 0.8571428571428571,
+      "recall": 0.75,
+      "f1-score": 0.8,
       "support": 16
     },
     "Forest": {
-      "precision": 0.4117647058823529,
-      "recall": 0.7,
-      "f1-score": 0.5185185185185185,
+      "precision": 0.7272727272727273,
+      "recall": 0.8,
+      "f1-score": 0.7619047619047619,
       "support": 10
     },
     "Grassland": {
-      "precision": 0.7333333333333333,
-      "recall": 0.5238095238095238,
-      "f1-score": 0.6111111111111112,
+      "precision": 0.7692307692307693,
+      "recall": 0.47619047619047616,
+      "f1-score": 0.5882352941176471,
       "support": 21
     },
     "Highway": {
-      "precision": 1.0,
+      "precision": 0.9090909090909091,
       "recall": 0.9090909090909091,
-      "f1-score": 0.9523809523809523,
+      "f1-score": 0.9090909090909091,
       "support": 11
     },
     "Lake": {
-      "precision": 0.7,
-      "recall": 0.7,
-      "f1-score": 0.7,
+      "precision": 0.8,
+      "recall": 0.8,
+      "f1-score": 0.8,
       "support": 10
     },
     "Mountain": {
-      "precision": 0.85,
-      "recall": 0.8947368421052632,
-      "f1-score": 0.8717948717948718,
+      "precision": 0.8,
+      "recall": 0.8421052631578947,
+      "f1-score": 0.8205128205128205,
       "support": 19
     },
     "Parking": {
@@ -89,64 +89,64 @@
       "support": 14
     },
     "Port": {
-      "precision": 0.875,
+      "precision": 0.7777777777777778,
       "recall": 0.7777777777777778,
-      "f1-score": 0.8235294117647058,
+      "f1-score": 0.7777777777777778,
       "support": 9
     },
     "Railway": {
-      "precision": 0.8,
-      "recall": 0.4444444444444444,
-      "f1-score": 0.5714285714285714,
+      "precision": 0.8333333333333334,
+      "recall": 0.5555555555555556,
+      "f1-score": 0.6666666666666666,
       "support": 9
     },
     "River": {
-      "precision": 0.5,
-      "recall": 0.375,
-      "f1-score": 0.42857142857142855,
+      "precision": 0.7142857142857143,
+      "recall": 0.625,
+      "f1-score": 0.6666666666666666,
       "support": 8
     }
   },
   "calibration_bins": [
     {
-      "confidence": 0.2676146626472473,
-      "accuracy": 0.3333333333333333,
-      "count": 3
+      "confidence": 0.2684035003185272,
+      "accuracy": 0.0,
+      "count": 2
     },
     {
-      "confidence": 0.3581965168317159,
-      "accuracy": 0.3333333333333333,
-      "count": 9
-    },
-    {
-      "confidence": 0.453344110931669,
-      "accuracy": 0.5714285714285714,
+      "confidence": 0.3410053253173828,
+      "accuracy": 0.7142857142857143,
       "count": 7
     },
     {
-      "confidence": 0.5612360489995856,
-      "accuracy": 0.47368421052631576,
-      "count": 19
+      "confidence": 0.4381619691848755,
+      "accuracy": 0.6,
+      "count": 5
     },
     {
-      "confidence": 0.6533780992031097,
-      "accuracy": 0.5,
-      "count": 10
+      "confidence": 0.5453025868960789,
+      "accuracy": 0.2857142857142857,
+      "count": 7
     },
     {
-      "confidence": 0.7460250791750456,
-      "accuracy": 0.5263157894736842,
-      "count": 19
+      "confidence": 0.6609172139848981,
+      "accuracy": 0.42857142857142855,
+      "count": 7
     },
     {
-      "confidence": 0.8602205628440494,
-      "accuracy": 0.8095238095238095,
-      "count": 21
+      "confidence": 0.7475974241892497,
+      "accuracy": 0.6,
+      "count": 15
     },
     {
-      "confidence": 0.9698853476771286,
-      "accuracy": 0.9285714285714286,
-      "count": 112
+      "confidence": 0.8572414762833539,
+      "accuracy": 0.6470588235294118,
+      "count": 17
+    },
+    {
+      "confidence": 0.98092095213277,
+      "accuracy": 0.9071428571428571,
+      "count": 140
     }
   ]
 }

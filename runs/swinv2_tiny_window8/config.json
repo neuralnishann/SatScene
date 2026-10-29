@@ -3,7 +3,7 @@
   "pretrained": true,
   "seed": 42,
   "img_size": 256,
-  "epochs": 5,
+  "epochs": 10,
   "batch_size": 16,
   "learning_rate": 0.0003,
   "weight_decay": 0.0001,

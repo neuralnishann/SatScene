@@ -7,3 +7,4 @@ data/
 /runs/*.pth
 /runs/**/*.pth
 /model/*.pth
+/satscene_three_model_runs.zip

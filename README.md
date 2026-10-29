@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛰️ SatScene: Land-Use Scene Classification with ConvNeXt-Tiny and a Rule-Based Decision-Support Agent
+# 🛰️ SatScene: Satellite Imagery Classification Using Deep Learning — A Comparative Study of Pretrained Vision Models
 
 *Geospatial Data Science · Home Assignment 1 · Software Project · 2026*
 
@@ -15,12 +15,12 @@ workflow for assigning one of 14 land-use scene labels to satellite or aerial im
 The repository includes YOLO-annotation parsing, transfer-learning training and
 evaluation, a browser interface, and an optional native macOS interface. A comparison
 of three pretrained vision backbones on a 200-image validation split found that
-SwinV2-Tiny achieved the highest top-1 accuracy (78.5%) and macro-F1 (0.766), while
-ConvNeXtV2-Tiny achieved 93.5% top-3 accuracy. These are single-run validation results,
-not estimates from the held-out test set. A separate saved ConvNeXt-Tiny test evaluation
-scored 6% accuracy and predicted every test image as Agriculture, exposing a severe,
-unresolved generalization failure. The results therefore support a software and
-experimental comparison, not a claim of operationally reliable classification.
+ConvNeXtV2-Tiny ranked first in validation accuracy (80.0%), macro-F1 (0.788), and
+top-3 accuracy (94.0%), narrowly ahead of SwinV2-Tiny. DINOv2 ViT-S/14 performed
+substantially worse under the same fine-tuning protocol. These are single-run
+validation results, not estimates from the held-out test set. The results support a
+software and experimental comparison, not a claim of operationally reliable
+classification.
 
 **Keywords:** remote sensing; satellite imagery; scene classification; transfer
 learning; ConvNeXt; Swin Transformer; DINOv2; decision support
@@ -49,6 +49,72 @@ The supplied images are ordinary JPEGs without coordinates, a coordinate referen
 system, geotransforms, or multispectral bands. SatScene therefore analyzes image
 appearance only: it does not perform georeferenced raster analysis, calculate NDVI,
 read elevation data, or execute the suggested follow-up analyses.
+
+### 1.1 End-to-end project pipeline
+
+The diagram follows data from the YOLO export through training, evaluation, and
+single-image decision support. SatScene has two related training routes: the notebook
+compares three backbones, while the packaged command-line training pipeline uses the
+configurable model in `configs/default.yaml`. The packaged pipeline's held-out
+evaluation is separate from the notebook's three-model validation comparison.
+
+```mermaid
+flowchart TB
+    subgraph data["1 · Dataset and label construction"]
+        source["Remote-sensing image dataset<br/>YOLOv8 export"]
+        splits["Supplied splits<br/>Train 700 · Validation 200 · Test 100"]
+        annotations["YOLO annotation parser<br/>most frequent class per image<br/>ties: first encountered"]
+        examples["Labeled image records<br/>14 scene classes"]
+        source --> splits --> annotations --> examples
+    end
+
+    subgraph comparison["2A · Three-model comparison notebook"]
+        trainprep["Train loader<br/>RGB · resize · ImageNet normalize<br/>random flips and 90° rotations"]
+        candidates["Pretrained backbone + new 14-class head<br/>ConvNeXtV2-Tiny · SwinV2-Tiny · DINOv2 ViT-S/14"]
+        optimize["Fine-tune on train split<br/>cross-entropy · AdamW · cosine schedule"]
+        validate["Validate each epoch<br/>select checkpoint by macro-F1"]
+        compare["Compare validation metrics<br/>accuracy · macro-F1 · balanced accuracy<br/>top-3 · calibration · per-class scores"]
+        selected["Provisional validation leader<br/>ConvNeXtV2-Tiny"]
+        examples --> trainprep --> candidates --> optimize --> validate --> compare --> selected
+    end
+
+    subgraph packaged["2B · Packaged configurable training"]
+        config["configs/default.yaml<br/>ConvNeXt-Tiny · training settings"]
+        cliTrain["python -m satscene.train<br/>train split + validation split"]
+        checkpoint["Selected checkpoint + history<br/>runs/convnext_tiny/"]
+        examples --> cliTrain
+        config --> cliTrain
+        cliTrain --> checkpoint
+    end
+
+    subgraph evaluation["3 · Held-out evaluation"]
+        testEval["Evaluate selected packaged checkpoint<br/>on test split only"]
+        metrics["Metrics, per-image predictions,<br/>confusion and calibration plots"]
+        checkpoint --> testEval
+        splits -->|"test images + labels"| testEval
+        testEval --> metrics
+    end
+
+    subgraph inference["4 · Single-image inference and decision support"]
+        userImage["Analyst submits an image"]
+        loadModel["Load configured model and checkpoint<br/>restore class order and input size"]
+        inferencePrep["RGB · resize · ImageNet normalize<br/>no random augmentation"]
+        predict["Model logits → softmax probabilities"]
+        report["Ranked class predictions + confidence<br/>flag low top-1 confidence"]
+        suggestion["Rule-based class suggestion<br/>for analyst review"]
+        interfaces["Gradio browser app<br/>or optional macOS desktop app"]
+        interfaces --> userImage --> inferencePrep --> predict --> report --> suggestion
+        loadModel --> predict
+    end
+
+    checkpoint -. "checkpoint used by the configured app" .-> loadModel
+    selected -. "candidate can be selected for deployment after further validation" .-> loadModel
+```
+
+The notebook comparison chooses a model using validation macro-F1; it does not by
+itself establish generalization. Keep the test split out of model selection and use it
+only for final evaluation. The class suggestion is static decision support, not an
+automated GIS analysis.
 
 ## 2. Dataset and label construction
 
@@ -84,17 +150,102 @@ and evaluation use resize and normalization without random augmentation.
 
 ### 3.2 Model comparison
 
-The archived comparison fine-tunes three pretrained `timm` classifiers. Each run uses
-the same 14 classes, seed 42, five epochs, batch size 16, AdamW with learning rate
-`3e-4` and weight decay `1e-4`, cosine learning-rate scheduling, and checkpoint
-selection by validation macro-F1. Input size is 256 for SwinV2-Tiny and 224 for the
-other two models.
+The comparison notebook uses the same supervised image-classification task and
+fine-tuning recipe for three pretrained `timm` backbones. A fresh classification head
+maps each backbone's image features to the project's 14 scene classes; the optimizer
+updates the head and the pretrained backbone.
 
-| Model | `timm` model identifier | Input size |
-| --- | --- | ---: |
-| ConvNeXtV2-Tiny | `convnextv2_tiny.fcmae_ft_in1k` | 224 |
-| SwinV2-Tiny | `swinv2_tiny_window8_256.ms_in1k` | 256 |
-| DINOv2 ViT-S/14 | `vit_small_patch14_dinov2.lvd142m` | 224 |
+| Model | Architecture and what it contributes here | `timm` model identifier | Input |
+| --- | --- | --- | ---: |
+| **ConvNeXtV2-Tiny** | Hierarchical convolutional stages combine local texture and progressively larger spatial features. ConvNeXtV2 adds Global Response Normalization (GRN) to its ConvNeXt blocks (Woo et al., 2023). This is the best-performing candidate in this validation run. | `convnextv2_tiny.fcmae_ft_in1k` | 224 × 224 |
+| **SwinV2-Tiny** | A hierarchical vision transformer computes attention within local windows, shifting windows between blocks so information can cross window boundaries. Its patch-merging stages capture increasingly broad context (Liu et al., 2022); this run uses the model's 256 × 256 input configuration. | `swinv2_tiny_window8_256.ms_in1k` | 256 × 256 |
+| **DINOv2 ViT-S/14** | A Vision Transformer divides the image into 14 × 14 patches and uses global self-attention across patch tokens. Its backbone starts from DINOv2 self-supervised visual features (`lvd142m`; Oquab et al., 2023); the project then fine-tunes it for the 14 labeled scene classes. | `vit_small_patch14_dinov2.lvd142m` | 224 × 224 |
+
+#### Architecture diagrams
+
+These simplified diagrams show each pretrained backbone and the 14-class head used in
+SatScene. They are original schematics based on the cited architecture papers, not
+reproductions of the papers' figures. Follow each model name to its research paper.
+
+**ConvNeXtV2-Tiny** — hierarchical convolutional stages with GRN in the ConvNeXtV2
+blocks ([Woo et al., 2023](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html)).
+
+```mermaid
+flowchart LR
+    A["RGB image<br/>224 × 224"] --> B["Stem<br/>4 × 4 convolution"]
+    B --> C["Stage 1<br/>ConvNeXtV2 blocks × 3<br/>GRN"]
+    C --> D["Downsample"]
+    D --> E["Stage 2<br/>ConvNeXtV2 blocks × 3<br/>GRN"]
+    E --> F["Downsample"]
+    F --> G["Stage 3<br/>ConvNeXtV2 blocks × 9<br/>GRN"]
+    G --> H["Downsample"]
+    H --> I["Stage 4<br/>ConvNeXtV2 blocks × 3<br/>GRN"]
+    I --> J["Global average pool"]
+    J --> K["Fine-tuned linear head<br/>14 scene classes"]
+```
+
+**Swin Transformer V2-Tiny** — hierarchical shifted-window attention, with patch
+merging between stages ([Liu et al., 2022](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html)).
+
+```mermaid
+flowchart LR
+    A["RGB image<br/>256 × 256"] --> B["Patch embedding"]
+    B --> C["Stage 1<br/>Window + shifted-window<br/>attention blocks × 2"]
+    C --> D["Patch merge"]
+    D --> E["Stage 2<br/>Window + shifted-window<br/>attention blocks × 2"]
+    E --> F["Patch merge"]
+    F --> G["Stage 3<br/>Window + shifted-window<br/>attention blocks × 6"]
+    G --> H["Patch merge"]
+    H --> I["Stage 4<br/>Window + shifted-window<br/>attention blocks × 2"]
+    I --> J["Norm + global average pool"]
+    J --> K["Fine-tuned linear head<br/>14 scene classes"]
+```
+
+**DINOv2 ViT-S/14** — global self-attention over patch tokens, initialized from
+self-supervised DINOv2 features and fine-tuned for this project
+([Oquab et al., 2023](https://arxiv.org/abs/2304.07193)).
+
+```mermaid
+flowchart LR
+    A["RGB image<br/>224 × 224"] --> B["Split into 14 × 14 patches"]
+    B --> C["Patch embeddings<br/>+ class token<br/>+ positional embeddings"]
+    C --> D["Transformer encoder<br/>12 blocks<br/>global self-attention"]
+    D --> E["Class-token feature"]
+    E --> F["Fine-tuned linear head<br/>14 scene classes"]
+```
+
+#### Comparison training pipeline
+
+```text
+YOLO export + image files
+  → one image label: most frequent annotated class (ties: first class encountered)
+  → train/validation loaders; RGB resize + ImageNet normalization
+  → train-only random horizontal/vertical flips and 90° rotations (p = 0.5 each)
+  → pretrained backbone + new 14-class head
+  → cross-entropy fine-tuning (AdamW, lr 3e-4, weight decay 1e-4)
+  → validation after each epoch; cosine learning-rate schedule
+  → save the checkpoint with the highest validation macro-F1
+  → compare accuracy, macro-F1, balanced accuracy, top-3 accuracy,
+    calibration, and per-class errors
+```
+
+All three runs use seed 42, batch size 16, and 10 epochs. The input is 224 × 224 for
+ConvNeXtV2 and DINOv2, and 256 × 256 for SwinV2. The augmentation and
+ImageNet-normalization pipeline is shared; only resize dimensions vary. Training uses
+the 700-image train split and model selection uses the 200-image validation split. The
+100-image test split is not used to select these comparison checkpoints. See
+[`src/satscene/data.py`](src/satscene/data.py) for transforms and loaders and
+[`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb) for the
+comparison training loop.
+
+Architecturally, ConvNeXtV2 builds on the modernized ConvNet design of ConvNeXt (Liu et
+al., 2022; Woo et al., 2023), using convolutional filters for local patterns and
+hierarchical feature maps; SwinV2 uses windowed attention to model spatial relationships
+with less cost than global attention at every layer (Liu et al., 2022); DINOv2 ViT-S/14
+uses global attention over patch tokens and relies on a large self-supervised pretrained
+representation (Oquab et al., 2023). These differences are plausible inductive biases
+for aerial scenes, not guarantees of performance: the results below measure these exact
+pretrained checkpoints and this particular small-data fine-tuning setup.
 
 ### 3.3 Prediction and decision support
 
@@ -109,7 +260,8 @@ The reported architecture comparison uses the validation split (`n = 200`) for m
 selection and comparison. Its results are from one run and have no across-seed
 uncertainty estimate. Accuracy intervals below are 95% Wilson score intervals; they
 describe binomial sampling uncertainty for the validation sample, not variation from
-retraining.
+retraining. The intervals overlap, so the small lead between the top two models should
+not be treated as evidence of a statistically reliable difference.
 
 The test set is intended for final evaluation after the method is selected. The
 separately archived test output is from the ConvNeXt-Tiny command-line pipeline, not
@@ -122,9 +274,17 @@ used to select the comparison models.
 
 | Model | Accuracy (95% Wilson CI) | Macro-F1 | Balanced accuracy | Weighted F1 | Top-3 accuracy | ECE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| **SwinV2-Tiny** | **78.5% (72.3–83.6%)** | **0.766** | **0.763** | **0.777** | 90.0% | **0.068** |
-| ConvNeXtV2-Tiny | 76.5% (70.2–81.8%) | 0.743 | 0.736 | 0.764 | **93.5%** | 0.072 |
-| DINOv2 ViT-S/14 | 32.0% (25.9–38.8%) | 0.222 | 0.246 | 0.269 | 55.5% | 0.085 |
+| **ConvNeXtV2-Tiny** | **80.0% (73.9–85.0%)** | **0.788** | **0.788** | **0.793** | **94.0%** | 0.118 |
+| SwinV2-Tiny | 79.5% (73.4–84.5%) | 0.782 | 0.777 | 0.790 | 93.5% | 0.129 |
+| DINOv2 ViT-S/14 | 38.0% (31.6–44.9%) | 0.305 | 0.344 | 0.342 | 69.0% | **0.103** |
+
+ECE is expected calibration error (lower is better, but it does not measure
+classification quality by itself). ConvNeXtV2 is the best choice **among these three
+recorded validation runs**: it has the highest macro-F1, accuracy, balanced accuracy,
+weighted F1, and top-3 accuracy. Its margin over SwinV2 is small (one more correct
+validation image and 0.006 higher macro-F1), and the accuracy intervals overlap. DINOv2
+has the lowest ECE, but its much lower classification scores make it the weakest
+predictor overall here.
 
 The complete aggregate metrics are in
 [`runs/model_comparison_metrics.csv`](runs/model_comparison_metrics.csv). Each model
@@ -134,7 +294,7 @@ confusion matrices, and calibration diagnostics.
 ### 5.2 Model-level diagnostics
 
 <details>
-<summary><strong>SwinV2-Tiny</strong> — best validation accuracy and macro-F1</summary>
+<summary><strong>SwinV2-Tiny</strong> — close second on validation macro-F1</summary>
 
 ![SwinV2-Tiny validation diagnostics: confusion matrices, per-class F1, and calibration](runs/swinv2_tiny_window8/validation_diagnostics.png)
 
@@ -145,7 +305,7 @@ confusion matrices, and calibration diagnostics.
 </details>
 
 <details>
-<summary><strong>ConvNeXtV2-Tiny</strong> — best top-3 accuracy</summary>
+<summary><strong>ConvNeXtV2-Tiny</strong> — best overall validation scores</summary>
 
 ![ConvNeXtV2-Tiny validation diagnostics: confusion matrices, per-class F1, and calibration](runs/convnextv2_tiny/validation_diagnostics.png)
 
@@ -169,24 +329,25 @@ confusion matrices, and calibration diagnostics.
 ### 5.3 Per-class performance of SwinV2-Tiny
 
 The per-class F1 results show why the macro-average and class support matter. SwinV2
-performed strongly on several classes, while River and Grassland remained difficult.
+performed strongly on several classes, while Grassland, Forest, and River remained
+difficult.
 
 | Class | Support | Precision | Recall | F1 |
 | --- | ---: | ---: | ---: | ---: |
 | Agriculture | 15 | 0.800 | 0.800 | 0.800 |
-| Airport | 12 | 0.714 | 0.833 | 0.769 |
+| Airport | 12 | 0.769 | 0.833 | 0.800 |
 | Beach | 9 | 0.889 | 0.889 | 0.889 |
-| City | 37 | 0.761 | 0.946 | 0.843 |
-| Desert | 16 | 0.929 | 0.813 | 0.867 |
-| Forest | 10 | 0.412 | 0.700 | 0.519 |
-| Grassland | 21 | 0.667 | 0.381 | 0.485 |
-| Highway | 11 | 0.818 | 0.818 | 0.818 |
+| City | 37 | 0.767 | 0.892 | 0.825 |
+| Desert | 16 | 1.000 | 0.750 | 0.857 |
+| Forest | 10 | 0.600 | 0.600 | 0.600 |
+| Grassland | 21 | 0.647 | 0.524 | 0.579 |
+| Highway | 11 | 0.769 | 0.909 | 0.833 |
 | Lake | 10 | 0.750 | 0.900 | 0.818 |
-| Mountain | 19 | 0.895 | 0.895 | 0.895 |
+| Mountain | 19 | 0.857 | 0.947 | 0.900 |
 | Parking | 14 | 0.933 | 1.000 | 0.966 |
-| Port | 9 | 1.000 | 0.889 | 0.941 |
-| Railway | 9 | 1.000 | 0.444 | 0.615 |
-| River | 8 | 0.750 | 0.375 | 0.500 |
+| Port | 9 | 1.000 | 0.667 | 0.800 |
+| Railway | 9 | 0.750 | 0.667 | 0.706 |
+| River | 8 | 0.667 | 0.500 | 0.571 |
 
 Values are transcribed from
 [`runs/swinv2_tiny_window8/metrics_valid.json`](runs/swinv2_tiny_window8/metrics_valid.json);
@@ -200,38 +361,33 @@ per-class scores are sensitive to the small number of examples in each class.
 
 ![Training loss over the comparison training epochs](runs/model_comparison_training_loss.png)
 
-### 5.5 Separate held-out test result
+### 5.5 Held-out test evaluation
 
-The archived test evaluation for the packaged ConvNeXt-Tiny pipeline scored **6%
-accuracy (6/100)** and **0.008 macro-F1**. All 100 test images were predicted as
-Agriculture, with a top-label expected calibration error of 0.940. This severe
-validation/test discrepancy is unresolved. The result is a warning against interpreting
-the validation comparison as evidence of generalization or deployment readiness.
-
-The recorded output is available in
-[`iodata/sample_output/metrics_test.json`](iodata/sample_output/metrics_test.json), with
-the example prediction in [`iodata/sample_output/prediction.csv`](iodata/sample_output/prediction.csv).
+The packaged ConvNeXt-Tiny command-line pipeline can evaluate the selected checkpoint
+on the held-out test split and writes metrics and per-image predictions to its output
+directory. This evaluation is separate from the three-model validation comparison;
+the comparison checkpoints have not been ranked using test results. Reserve the test
+split for final assessment after model selection.
 
 ## 6. Discussion
 
-Within this single validation comparison, SwinV2-Tiny ranked first in top-1 accuracy,
-macro-F1, balanced accuracy, and weighted F1. ConvNeXtV2-Tiny had the highest top-3
-accuracy, which may be useful when predictions are reviewed by a person, but does not
-replace top-1 or per-class performance. DINOv2 ViT-S/14 performed substantially worse
-under the recorded training setup.
+Within this single validation comparison, ConvNeXtV2-Tiny ranked first on macro-F1,
+top-1 accuracy, balanced accuracy, weighted F1, and top-3 accuracy; SwinV2-Tiny was a
+close second. The practical choice for this project is therefore ConvNeXtV2-Tiny if
+choosing only from these validation runs. This is a provisional model-selection result,
+not a claim that ConvNeXtV2 is inherently superior: the runs share one seed, the
+validation sample is small, and no repeated-seed uncertainty is available. DINOv2
+ViT-S/14 performed substantially worse under the recorded fine-tuning setup, despite
+its large self-supervised pretraining.
 
 The per-class report shows high validation F1 for Parking, Port, Beach, and Mountain,
 but lower F1 for Grassland, Forest, and River. Small class supports make these estimates
-uncertain. The separate test collapse also shows that good validation metrics alone do
-not establish robust performance. Further investigation should start with annotation
-quality, split integrity, class ordering, checkpoint loading, and per-class test
-predictions before any deployment claim.
+uncertain. Validation metrics alone do not establish robust performance. Further
+evaluation across repeated runs and a carefully audited held-out test set is needed
+before any deployment claim.
 
 ## 7. Limitations
 
-- **Severe generalization failure:** the available ConvNeXt-Tiny test output is 6%
-  accurate and predicts a single class for every sample. The cause has not been
-  established.
 - **Single comparison run:** there are no repeated seeds or variance estimates.
 - **Small, imbalanced dataset:** 1,000 images are few for a 14-class task, and class
   supports range from 8 to 37 in validation.
@@ -339,9 +495,10 @@ part of the tracked software archive.
 
 ## References and licenses
 
-- Liu et al. (2022). [A ConvNet for the 2020s](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html). CVPR.
-- Liu et al. (2022). [Swin Transformer V2: Scaling Up Capacity and Resolution](https://arxiv.org/abs/2111.09883).
-- Oquab et al. (2023). [DINOv2: Learning Robust Visual Features without Supervision](https://arxiv.org/abs/2304.07193).
+- Liu, Z. et al. (2022). [A ConvNet for the 2020s](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html). *CVPR*.
+- Woo, S. et al. (2023). [ConvNeXt V2: Co-designing and Scaling ConvNets with Masked Autoencoders](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html). *CVPR*.
+- Liu, Z. et al. (2022). [Swin Transformer V2: Scaling Up Capacity and Resolution](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html). *CVPR*.
+- Oquab, M. et al. (2023). [DINOv2: Learning Robust Visual Features without Supervision](https://arxiv.org/abs/2304.07193). arXiv:2304.07193.
 - Wightman et al. [PyTorch Image Models (`timm`)](https://github.com/huggingface/pytorch-image-models).
 - Dataset provenance and export details: [`resources/README.md`](resources/README.md).
 
