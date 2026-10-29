@@ -7,7 +7,16 @@ import timm
 
 def build_model(num_classes: int, name: str = "convnext_tiny.fb_in22k_ft_in1k", pretrained: bool = True,
                 img_size: int | None = None):
-    """Create a classifier with a fresh head for the project's scene classes."""
+    """Create a pretrained feature extractor with a fresh scene-class head.
+
+    For an image x, the backbone produces a feature vector h = f_theta(x).
+    The replacement classifier maps it to K logits z = W h + b, where
+    K=num_classes. Inference converts logits to class probabilities using
+    softmax(z)_c = exp(z_c) / sum_j exp(z_j). ``timm.create_model`` handles the
+    architecture-specific pooling and head construction; this factory does
+    not implement alternate blocks or a custom mathematical approximation.
+    See docs/MATHEMATICAL_METHODS.md for model-specific formulations.
+    """
     kwargs = {}
     if img_size is not None and name.startswith("swinv2_"):
         # Four Swin stages reduce the input by 32. A window of 8 must divide

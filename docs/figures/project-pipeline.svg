@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="410" viewBox="0 0 1200 410" role="img" aria-labelledby="title desc">
+  <title id="title">SatScene project pipeline</title>
+  <desc id="desc">Dataset annotations create image-level labels. A three-model notebook comparison selects a provisional candidate using validation macro F1. Separately, the packaged configurable trainer produces a checkpoint that can be evaluated on the held-out test set and used by the inference application.</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#49617a"/></marker><style>
+    text{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#18324b}.title{font-size:23px;font-weight:700}.head{font-size:16px;font-weight:700}.body{font-size:13px}.small{font-size:12px;fill:#49617a}.box{stroke:#b8c8d8;stroke-width:1.5;rx:12}.arrow{stroke:#49617a;stroke-width:2;fill:none;marker-end:url(#arrow)}
+  </style></defs>
+  <rect width="1200" height="410" fill="#f7f9fc" rx="18"/>
+  <text x="40" y="42" class="title">SatScene · data, experiments, and inference</text>
+  <rect x="38" y="88" width="210" height="112" class="box" fill="#e8f2fb"/><text x="58" y="119" class="head">Dataset export</text><text x="58" y="145" class="body">700 train · 200 validation</text><text x="58" y="166" class="body">100 test · 14 classes</text><text x="58" y="187" class="small">YOLO boxes + JPEG images</text>
+  <rect x="290" y="88" width="230" height="112" class="box" fill="#eaf6ef"/><text x="310" y="119" class="head">Label construction</text><text x="310" y="145" class="body">Most frequent annotated class</text><text x="310" y="166" class="body">becomes image-level target</text><text x="310" y="187" class="small">Ties: first annotation encountered</text>
+  <path d="M248 144 H284" class="arrow"/><path d="M520 144 H560 V115 H590" class="arrow"/><path d="M560 144 V286 H590" class="arrow"/>
+  <rect x="598" y="65" width="264" height="134" class="box" fill="#fff4dd"/><text x="618" y="96" class="head">Notebook comparison</text><text x="618" y="122" class="body">ConvNeXtV2 · SwinV2 · DINOv2</text><text x="618" y="143" class="body">Fine-tune; select by validation macro-F1</text><text x="618" y="171" class="small">200-image validation split</text>
+  <rect x="598" y="231" width="264" height="112" class="box" fill="#f0eafa"/><text x="618" y="262" class="head">Packaged trainer</text><text x="618" y="288" class="body">Configurable timm model + 14-class head</text><text x="618" y="314" class="small">configs/default.yaml · separate run path</text>
+  <path d="M862 132 H905" class="arrow"/><path d="M862 287 H905" class="arrow"/>
+  <rect x="913" y="65" width="245" height="134" class="box" fill="#e8f2fb"/><text x="933" y="96" class="head">Compare &amp; select</text><text x="933" y="122" class="body">Accuracy · macro-F1 · top-3</text><text x="933" y="143" class="body">Per-class errors · calibration</text><text x="933" y="171" class="small">Leader here: ConvNeXtV2-Tiny*</text>
+  <rect x="913" y="231" width="245" height="112" class="box" fill="#eaf6ef"/><text x="933" y="262" class="head">Checkpoint → application</text><text x="933" y="288" class="body">Held-out test evaluation</text><text x="933" y="314" class="small">Gradio / macOS single-image inference</text>
+  <text x="40" y="384" class="small">* Provisional result from one validation run; notebook candidate and packaged trainer are distinct workflows.</text>
+</svg>

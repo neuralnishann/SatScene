@@ -1,4 +1,12 @@
-"""Training entry point:  ``python -m satscene.train --config configs/default.yaml``"""
+"""Training entry point: ``python -m satscene.train --config configs/default.yaml``.
+
+For a minibatch of B logits z_i and class labels y_i, the default objective is
+mean multiclass cross-entropy:
+L = -(1/B) sum_i log softmax(z_i)[y_i]. Optional class weighting changes
+each sample's contribution through its target-class weight. Validation scores
+select the epoch to checkpoint; they do not estimate unseen-test performance.
+See docs/MATHEMATICAL_METHODS.md for the complete objective and optimizer notes.
+"""
 from __future__ import annotations
 
 import argparse

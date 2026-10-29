@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛰️ SatScene: Satellite Imagery Classification Using Deep Learning — A Comparative Study of Pretrained Vision Models
+# SatScene: Satellite Scene Classification with Pretrained Vision Models
 
 *Geospatial Data Science · Home Assignment 1 · Software Project · 2026*
 
@@ -52,64 +52,14 @@ read elevation data, or execute the suggested follow-up analyses.
 
 ### 1.1 End-to-end project pipeline
 
-The diagram follows data from the YOLO export through training, evaluation, and
-single-image decision support. SatScene has two related training routes: the notebook
-compares three backbones, while the packaged command-line training pipeline uses the
-configurable model in `configs/default.yaml`. The packaged pipeline's held-out
-evaluation is separate from the notebook's three-model validation comparison.
+The figure follows data from the YOLO export through training, evaluation, and
+single-image decision support. SatScene has two related but distinct training routes:
+the notebook compares three backbones, while the packaged command-line pipeline uses
+the configurable model in `configs/default.yaml`. The archived held-out test example
+comes from the packaged pipeline and is not the test evaluation of the comparison
+checkpoints.
 
-```mermaid
-flowchart TB
-    subgraph data["1 · Dataset and label construction"]
-        source["Remote-sensing image dataset<br/>YOLOv8 export"]
-        splits["Supplied splits<br/>Train 700 · Validation 200 · Test 100"]
-        annotations["YOLO annotation parser<br/>most frequent class per image<br/>ties: first encountered"]
-        examples["Labeled image records<br/>14 scene classes"]
-        source --> splits --> annotations --> examples
-    end
-
-    subgraph comparison["2A · Three-model comparison notebook"]
-        trainprep["Train loader<br/>RGB · resize · ImageNet normalize<br/>random flips and 90° rotations"]
-        candidates["Pretrained backbone + new 14-class head<br/>ConvNeXtV2-Tiny · SwinV2-Tiny · DINOv2 ViT-S/14"]
-        optimize["Fine-tune on train split<br/>cross-entropy · AdamW · cosine schedule"]
-        validate["Validate each epoch<br/>select checkpoint by macro-F1"]
-        compare["Compare validation metrics<br/>accuracy · macro-F1 · balanced accuracy<br/>top-3 · calibration · per-class scores"]
-        selected["Provisional validation leader<br/>ConvNeXtV2-Tiny"]
-        examples --> trainprep --> candidates --> optimize --> validate --> compare --> selected
-    end
-
-    subgraph packaged["2B · Packaged configurable training"]
-        config["configs/default.yaml<br/>ConvNeXt-Tiny · training settings"]
-        cliTrain["python -m satscene.train<br/>train split + validation split"]
-        checkpoint["Selected checkpoint + history<br/>runs/convnext_tiny/"]
-        examples --> cliTrain
-        config --> cliTrain
-        cliTrain --> checkpoint
-    end
-
-    subgraph evaluation["3 · Held-out evaluation"]
-        testEval["Evaluate selected packaged checkpoint<br/>on test split only"]
-        metrics["Metrics, per-image predictions,<br/>confusion and calibration plots"]
-        checkpoint --> testEval
-        splits -->|"test images + labels"| testEval
-        testEval --> metrics
-    end
-
-    subgraph inference["4 · Single-image inference and decision support"]
-        userImage["Analyst submits an image"]
-        loadModel["Load configured model and checkpoint<br/>restore class order and input size"]
-        inferencePrep["RGB · resize · ImageNet normalize<br/>no random augmentation"]
-        predict["Model logits → softmax probabilities"]
-        report["Ranked class predictions + confidence<br/>flag low top-1 confidence"]
-        suggestion["Rule-based class suggestion<br/>for analyst review"]
-        interfaces["Gradio browser app<br/>or optional macOS desktop app"]
-        interfaces --> userImage --> inferencePrep --> predict --> report --> suggestion
-        loadModel --> predict
-    end
-
-    checkpoint -. "checkpoint used by the configured app" .-> loadModel
-    selected -. "candidate can be selected for deployment after further validation" .-> loadModel
-```
+![SatScene project pipeline: data and label construction, model comparison, packaged training, evaluation, and inference](docs/figures/project-pipeline.svg)
 
 The notebook comparison chooses a model using validation macro-F1; it does not by
 itself establish generalization. Keep the test split out of model selection and use it
@@ -159,60 +109,29 @@ updates the head and the pretrained backbone.
 | --- | --- | --- | ---: |
 | **ConvNeXtV2-Tiny** | Hierarchical convolutional stages combine local texture and progressively larger spatial features. ConvNeXtV2 adds Global Response Normalization (GRN) to its ConvNeXt blocks (Woo et al., 2023). This is the best-performing candidate in this validation run. | `convnextv2_tiny.fcmae_ft_in1k` | 224 × 224 |
 | **SwinV2-Tiny** | A hierarchical vision transformer computes attention within local windows, shifting windows between blocks so information can cross window boundaries. Its patch-merging stages capture increasingly broad context (Liu et al., 2022); this run uses the model's 256 × 256 input configuration. | `swinv2_tiny_window8_256.ms_in1k` | 256 × 256 |
-| **DINOv2 ViT-S/14** | A Vision Transformer divides the image into 14 × 14 patches and uses global self-attention across patch tokens. Its backbone starts from DINOv2 self-supervised visual features (`lvd142m`; Oquab et al., 2023); the project then fine-tunes it for the 14 labeled scene classes. | `vit_small_patch14_dinov2.lvd142m` | 224 × 224 |
+| **DINOv2 ViT-S/14** | A Vision Transformer divides the image into 14 × 14-pixel patches and uses global self-attention across patch tokens. Its backbone starts from DINOv2 self-supervised visual features (`lvd142m`; Oquab et al., 2023); the project then fine-tunes it for the 14 labeled scene classes. | `vit_small_patch14_dinov2.lvd142m` | 224 × 224 |
 
 #### Architecture diagrams
 
-These simplified diagrams show each pretrained backbone and the 14-class head used in
-SatScene. They are original schematics based on the cited architecture papers, not
-reproductions of the papers' figures. Follow each model name to its research paper.
+These simplified diagrams show the backbone and 14-class prediction path used in
+SatScene. They are original, repository-local SVG schematics based on the cited model
+papers, not reproductions of the papers' figures.
 
 **ConvNeXtV2-Tiny** — hierarchical convolutional stages with GRN in the ConvNeXtV2
 blocks ([Woo et al., 2023](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html)).
 
-```mermaid
-flowchart LR
-    A["RGB image<br/>224 × 224"] --> B["Stem<br/>4 × 4 convolution"]
-    B --> C["Stage 1<br/>ConvNeXtV2 blocks × 3<br/>GRN"]
-    C --> D["Downsample"]
-    D --> E["Stage 2<br/>ConvNeXtV2 blocks × 3<br/>GRN"]
-    E --> F["Downsample"]
-    F --> G["Stage 3<br/>ConvNeXtV2 blocks × 9<br/>GRN"]
-    G --> H["Downsample"]
-    H --> I["Stage 4<br/>ConvNeXtV2 blocks × 3<br/>GRN"]
-    I --> J["Global average pool"]
-    J --> K["Fine-tuned linear head<br/>14 scene classes"]
-```
+![ConvNeXtV2-Tiny architecture: convolutional stem, four hierarchical stages, global pooling, and 14-class head](docs/figures/convnextv2.svg)
 
 **Swin Transformer V2-Tiny** — hierarchical shifted-window attention, with patch
 merging between stages ([Liu et al., 2022](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html)).
 
-```mermaid
-flowchart LR
-    A["RGB image<br/>256 × 256"] --> B["Patch embedding"]
-    B --> C["Stage 1<br/>Window + shifted-window<br/>attention blocks × 2"]
-    C --> D["Patch merge"]
-    D --> E["Stage 2<br/>Window + shifted-window<br/>attention blocks × 2"]
-    E --> F["Patch merge"]
-    F --> G["Stage 3<br/>Window + shifted-window<br/>attention blocks × 6"]
-    G --> H["Patch merge"]
-    H --> I["Stage 4<br/>Window + shifted-window<br/>attention blocks × 2"]
-    I --> J["Norm + global average pool"]
-    J --> K["Fine-tuned linear head<br/>14 scene classes"]
-```
+![SwinV2-Tiny architecture: patch embedding, shifted-window attention stages, patch merging, and 14-class head](docs/figures/swinv2.svg)
 
 **DINOv2 ViT-S/14** — global self-attention over patch tokens, initialized from
 self-supervised DINOv2 features and fine-tuned for this project
 ([Oquab et al., 2023](https://arxiv.org/abs/2304.07193)).
 
-```mermaid
-flowchart LR
-    A["RGB image<br/>224 × 224"] --> B["Split into 14 × 14 patches"]
-    B --> C["Patch embeddings<br/>+ class token<br/>+ positional embeddings"]
-    C --> D["Transformer encoder<br/>12 blocks<br/>global self-attention"]
-    D --> E["Class-token feature"]
-    E --> F["Fine-tuned linear head<br/>14 scene classes"]
-```
+![DINOv2 ViT-S/14 architecture: patch tokens, global self-attention, class-token representation, and 14-class head](docs/figures/dinov2.svg)
 
 #### Comparison training pipeline
 
@@ -247,7 +166,89 @@ representation (Oquab et al., 2023). These differences are plausible inductive b
 for aerial scenes, not guarantees of performance: the results below measure these exact
 pretrained checkpoints and this particular small-data fine-tuning setup.
 
-### 3.3 Prediction and decision support
+### 3.3 Mathematical formulation
+
+All three comparison systems implement an image-to-class mapping. Given normalized
+image `x`, pretrained backbone `fθ`, and a 14-class linear head, the model produces
+logits `z` and class probabilities `p`:
+
+```text
+h = fθ(x)                         feature vector
+z = W h + b                       14 unnormalized class scores
+p_c = exp(z_c) / Σ_j exp(z_j)     softmax probability for class c
+ŷ = argmax_c p_c                  predicted class
+```
+
+For a batch of `B` labeled images, fine-tuning minimizes multiclass cross-entropy:
+
+```text
+L = −(1/B) Σ_i log p_(i,y_i)
+  =  (1/B) Σ_i [−z_(i,y_i) + log Σ_c exp(z_(i,c))].
+```
+
+The comparison uses AdamW (`η = 3×10⁻⁴`, weight decay `λ = 10⁻⁴`) and cosine
+annealing over 10 epochs. The per-epoch learning rate follows
+`η_t = ½ η_max [1 + cos(πt/T_max)]` with `T_max = 10` and the default minimum
+learning rate of zero. The checkpoint is the epoch with the highest validation
+macro-F1. This is model selection on validation data, not an unbiased estimate of
+generalization.
+
+The architectures have different feature interaction costs. ConvNeXtV2 uses local
+convolutions in four hierarchical stages (Tiny depths `3, 3, 9, 3`) and global
+channel response normalization. SwinV2 uses self-attention within windows of `M×M`
+tokens, alternates shifted windows, and merges patches between stages. At a stage
+with `N` tokens and feature width `d`, window attention has pairwise-attention cost
+approximately `O(N M² d)`, while global attention has `O(N² d)`. DINOv2 ViT-S/14
+uses global attention over patch tokens: a 224×224 input gives `(224/14)² = 256`
+patch tokens, plus one class token, for sequence length `N = 257`. Its attention
+interaction term scales as `O(N² d)` per block. These costs describe attention
+interactions, not full end-to-end FLOPs; projections, MLPs, convolution, and feature
+width also contribute. Full block equations, metric definitions, and derivations are
+in [Mathematical foundations](docs/MATHEMATICAL_METHODS.md).
+
+For class `c`, precision is `TP_c/(TP_c+FP_c)`, recall is
+`TP_c/(TP_c+FN_c)`, and `F1_c = 2·precision_c·recall_c/(precision_c+recall_c)`.
+Macro-F1 is the unweighted mean of the 14 class F1 scores; balanced accuracy is the
+mean class recall. The accuracy interval uses the Wilson score method. For example,
+ConvNeXtV2 has `160/200 = 0.800` accuracy and a 95% Wilson interval of approximately
+`[0.739, 0.850]`; SwinV2 has `159/200 = 0.795`. Their accuracy gap is just
+`(160−159)/200 = 0.005` (one validation image). Their macro-F1 gap is approximately
+`0.7881−0.7817 = 0.0063`. Such small single-run gaps do not establish a stable ranking.
+
+### 3.4 Improving the method for this task
+
+The current experiment is a useful baseline, but the dataset size and label construction
+limit what can be learned reliably. The next improvements should target those constraints:
+
+1. **Audit the scene labels.** The dominant YOLO object is an imperfect proxy for the
+   whole image. Review ambiguous and multi-class scenes, correct noisy labels, and record
+   label confidence before spending compute on larger models.
+2. **Measure variance.** Repeat training with several seeds and report mean and spread
+   for macro-F1 and balanced accuracy. The one-image difference between ConvNeXtV2 and
+   SwinV2 on this validation set is too small to establish a dependable winner.
+3. **Address minority classes with training-only methods.** Compare class-weighted loss
+   or a balanced sampler, and use label-preserving rotations/crops suited to overhead
+   imagery. Select settings on validation data and report per-class recall to check that
+   gains are not limited to frequent classes.
+4. **Use spatially independent evaluation when locations are available.** Random image
+   splits can place nearby or near-duplicate scenes in both training and validation.
+   Group by location, source tile, or acquisition where metadata permits, then keep a
+   final test set untouched until model selection is complete.
+5. **Tune the strongest candidates consistently.** Compare frozen-backbone warm-up,
+   discriminative learning rates, weight decay, and input resolution for ConvNeXtV2 and
+   SwinV2 under the same repeated-seed protocol. Add DINOv2 back only after verifying
+   its optimization and input pipeline; its current run is much weaker, but one run
+   does not diagnose the cause.
+6. **Calibrate and review errors.** Fit a calibration method on validation predictions,
+   inspect confusion pairs such as Forest/Grassland/River, and use an abstain/review
+   threshold when confidence is low. The current softmax score is not a guarantee of
+   correctness.
+
+These are proposed experiments, not implemented capabilities or measured improvements.
+Because the supplied JPEGs lack coordinates and acquisition metadata, spatial validation
+and geospatial measurements require a better documented dataset.
+
+### 3.5 Prediction and decision support
 
 For an input image, the classifier returns softmax scores for the 14 classes. The
 rule-based reporting layer presents the top predictions, flags low top-1 confidence,
@@ -504,4 +505,7 @@ part of the tracked software archive.
 
 Citation metadata is provided in [`CITATION.cff`](CITATION.cff). The software is
 licensed under the [MIT License](LICENSE). Dataset and pretrained-model licenses are
-separate; consult their original sources before redistribution.
+separate; consult their original sources before redistribution. For the equations
+implemented by the training and evaluation code, model-specific complexity, worked
+confidence-interval calculations, and extended bibliography, see
+[`docs/MATHEMATICAL_METHODS.md`](docs/MATHEMATICAL_METHODS.md).
