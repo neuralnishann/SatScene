@@ -167,11 +167,6 @@ measure these exact pretrained checkpoints under this small-data fine-tuning set
 
 ### 3.3 Mathematical formulation
 
-Equations use standard Markdown LaTeX delimiters (`$...$` inline and `$$...$$`
-for display). GitHub renders them with MathJax ([syntax reference](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions)),
-and VS Code's built-in Markdown preview supports KaTeX
-([preview documentation](https://code.visualstudio.com/docs/languages/markdown#_math-formula-rendering)).
-
 All three comparison systems implement an image-to-class mapping. Given normalized
 image $\mathbf{x}$, pretrained backbone $f_{\boldsymbol{\theta}}$, and a 14-class
 linear head, the model produces logits $\mathbf{z}$ and class probabilities $\mathbf{p}$:
@@ -404,6 +399,13 @@ uncertain. Validation metrics alone do not establish robust performance. Further
 evaluation across repeated runs and a carefully audited held-out test set is needed
 before any deployment claim.
 
+Related EuroSAT studies examine deep-learning classifiers and compare pretrained
+ResNet and GoogLeNet variants [21], [22]. They provide useful context for satellite
+scene classification, but their ten-class EuroSAT data, label definitions, and
+evaluation protocols differ from SatScene's 14-class, proxy-labeled RGB dataset.
+Their reported results therefore should not be compared numerically with the
+validation results in this repository.
+
 ## 7. Limitations
 
 - **Single comparison run:** there are no repeated seeds or variance estimates.
@@ -508,21 +510,29 @@ their size; supply a locally available checkpoint using `--checkpoint` where nee
 | `resources/` | Dataset provenance and references |
 
 The comparison summaries and diagnostics are committed; trained checkpoint files are
-not. The optional LaTeX/PDF submission materials in `paper/` are local-only and are not
-part of the tracked software archive.
+not.
 
 ## References and licenses
 
-1. Liu, Z. et al. (2022). [A ConvNet for the 2020s](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html). *CVPR*.
-2. Woo, S. et al. (2023). [ConvNeXt V2: Co-designing and Scaling ConvNets with Masked Autoencoders](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html). *CVPR*.
-3. Liu, Z. et al. (2021). [Swin Transformer: Hierarchical Vision Transformer Using Shifted Windows](https://openaccess.thecvf.com/content/ICCV2021/html/Liu_Swin_Transformer_Hierarchical_Vision_Transformer_Using_Shifted_Windows_ICCV_2021_paper.html). *ICCV*.
-4. Liu, Z. et al. (2022). [Swin Transformer V2: Scaling Up Capacity and Resolution](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html). *CVPR*.
-5. Dosovitskiy, A. et al. (2021). [An Image Is Worth 16×16 Words: Transformers for Image Recognition at Scale](https://openreview.net/forum?id=YicbFdNTTy). *ICLR*.
-6. Oquab, M. et al. (2023). [DINOv2: Learning Robust Visual Features without Supervision](https://arxiv.org/abs/2304.07193). arXiv:2304.07193.
+[1] Z. Liu et al., “A ConvNet for the 2020s,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2022. [Online]. Available: https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html
+
+[2] S. Woo et al., “ConvNeXt V2: Co-designing and scaling ConvNets with masked autoencoders,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2023. [Online]. Available: https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html
+
+[3] Z. Liu et al., “Swin Transformer: Hierarchical vision Transformer using shifted windows,” in *Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)*, 2021. [Online]. Available: https://openaccess.thecvf.com/content/ICCV2021/html/Liu_Swin_Transformer_Hierarchical_Vision_Transformer_Using_Shifted_Windows_ICCV_2021_paper.html
+
+[4] Z. Liu et al., “Swin Transformer V2: Scaling up capacity and resolution,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2022. [Online]. Available: https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html
+
+[5] A. Dosovitskiy et al., “An image is worth 16×16 words: Transformers for image recognition at scale,” in *Proc. Int. Conf. Learn. Represent. (ICLR)*, 2021. [Online]. Available: https://openreview.net/forum?id=YicbFdNTTy
+
+[6] M. Oquab et al., “DINOv2: Learning robust visual features without supervision,” arXiv:2304.07193, 2023. [Online]. Available: https://arxiv.org/abs/2304.07193
+
+[21] G. V. Lakshmi, P. Prathik, and G. Geetha, “Satellite Image Classification Using Deep Learning,” in *Proc. 2024 2nd International Conference on Signal Processing, Communication, Power and Embedded System (SCOPES)*, Paralakhemundi Campus, Centurion University of Technology and Management, Odisha, India, 2024, pp. 1–5, doi: [10.1109/SCOPES64467.2024.10990975](https://doi.org/10.1109/SCOPES64467.2024.10990975).
+
+[22] D. Yadav, K. Kapoor, A. K. Yadav, M. Kumar, A. Jain, and J. Morato Lara, “Satellite image classification using deep learning approach,” *Earth Science Informatics*, vol. 17, no. 3, pp. 2495–2508, 2024, doi: [10.1007/s12145-024-01301-x](https://doi.org/10.1007/s12145-024-01301-x).
 
 The mathematical methods note contains references **[7–20]** for optimization,
 statistical intervals, probability scoring, remote-sensing datasets, and implementation
-documentation. [Open the complete bibliography and derivations](docs/MATHEMATICAL_METHODS.md#references-and-further-reading).
+documentation. [Open the complete bibliography and derivations](docs/MATHEMATICAL_METHODS.md#references).
 Dataset provenance and export details are in [`resources/README.md`](resources/README.md).
 
 Citation metadata is provided in [`CITATION.cff`](CITATION.cff). The software is
