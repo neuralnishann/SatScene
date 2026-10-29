@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Download the dataset (CC0-1.0) from Kaggle. Requires ~/.kaggle/kaggle.json or
+# Download the dataset from Kaggle. The Roboflow export identifies its license as CC BY 4.0.
+# Requires ~/.kaggle/kaggle.json or
 # KAGGLE_USERNAME / KAGGLE_KEY in the environment.
 set -euo pipefail
 mkdir -p data

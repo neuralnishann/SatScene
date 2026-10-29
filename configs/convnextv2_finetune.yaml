@@ -1,0 +1,28 @@
+# Fine-tuning candidate based on the strongest archived validation run.
+# This is an experiment configuration, not a claim of improved accuracy.
+seed: 42
+data:
+  root: data/Remote Sensing Data.v2i.yolov8
+  img_size: 224
+  val_split: valid
+model:
+  name: convnextv2_tiny.fcmae_ft_in1k
+  pretrained: true
+train:
+  epochs: 20
+  batch_size: 16
+  num_workers: 2
+  class_weighted_loss: false
+  label_smoothing: 0.0
+  selection_metric: val_acc
+  early_stopping_patience: 5
+  early_stopping_min_delta: 0.0
+optim:
+  backbone_lr: 3.0e-5
+  head_lr: 3.0e-4
+  weight_decay: 1.0e-4
+  warmup_epochs: 1
+  warmup_start_factor: 0.1
+  min_lr: 1.0e-6
+output:
+  dir: runs/convnextv2_lr_tune

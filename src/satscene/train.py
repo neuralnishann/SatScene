@@ -26,7 +26,7 @@ from sklearn.metrics import balanced_accuracy_score, f1_score
 
 from .data import make_loader
 from .labels import class_distribution, collect_split, inverse_frequency_weights, read_class_names
-from .model import build_model, count_params_m, save_checkpoint
+from .model import build_model, count_params_m, finetuning_param_groups, save_checkpoint
 from .runtime import best_device
 
 
@@ -57,6 +57,34 @@ def evaluate_loader(model, loader, device, criterion):
         "val_macro_f1": f1_score(targets, predictions, average="macro", zero_division=0),
         "val_balanced_acc": balanced_accuracy_score(targets, predictions),
     }
+
+
+def build_lr_scheduler(optimizer, epochs, warmup_epochs=0, warmup_start_factor=0.1, min_lr=0.0):
+    """Optionally warm up, then cosine-decay over the remaining epochs."""
+    if epochs < 1:
+        raise ValueError("train.epochs must be at least 1")
+    if warmup_epochs < 0 or warmup_epochs >= epochs:
+        raise ValueError("optim.warmup_epochs must be non-negative and less than train.epochs")
+    if not 0.0 < warmup_start_factor <= 1.0:
+        raise ValueError("optim.warmup_start_factor must be in (0, 1]")
+    if min_lr < 0:
+        raise ValueError("optim.min_lr must be non-negative")
+
+    decay_epochs = epochs - warmup_epochs
+    cosine = optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=decay_epochs, eta_min=min_lr
+    )
+    if warmup_epochs == 0:
+        return cosine
+    warmup = optim.lr_scheduler.LinearLR(
+        optimizer,
+        start_factor=warmup_start_factor,
+        end_factor=1.0,
+        total_iters=warmup_epochs,
+    )
+    return optim.lr_scheduler.SequentialLR(
+        optimizer, schedulers=[warmup, cosine], milestones=[warmup_epochs]
+    )
 
 
 def main() -> None:
@@ -93,9 +121,24 @@ def main() -> None:
     weight = None
     if tc.get("class_weighted_loss", False):
         weight = torch.tensor(inverse_frequency_weights(train_ix.labels, len(class_names)), dtype=torch.float, device=device)
-    criterion = nn.CrossEntropyLoss(weight=weight)
-    optimizer = optim.AdamW(model.parameters(), lr=oc["lr"], weight_decay=oc["weight_decay"])
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=tc["epochs"])
+    criterion = nn.CrossEntropyLoss(
+        weight=weight,
+        label_smoothing=float(tc.get("label_smoothing", 0.0)),
+    )
+    base_lr = float(oc.get("lr", 3.0e-4))
+    backbone_lr = float(oc.get("backbone_lr", base_lr))
+    head_lr = float(oc.get("head_lr", base_lr))
+    weight_decay = float(oc["weight_decay"])
+    optimizer = optim.AdamW(
+        finetuning_param_groups(model, backbone_lr, head_lr, weight_decay)
+    )
+    scheduler = build_lr_scheduler(
+        optimizer,
+        epochs=int(tc["epochs"]),
+        warmup_epochs=int(oc.get("warmup_epochs", 0)),
+        warmup_start_factor=float(oc.get("warmup_start_factor", 0.1)),
+        min_lr=float(oc.get("min_lr", 0.0)),
+    )
     scaler = GradScaler("cuda", enabled=use_amp)
 
     out_dir = cfg["output"]["dir"]
@@ -105,7 +148,15 @@ def main() -> None:
     selection_metric = tc.get("selection_metric", "val_macro_f1")
     if selection_metric not in {"val_acc", "val_macro_f1", "val_balanced_acc"}:
         raise ValueError("train.selection_metric must be val_acc, val_macro_f1, or val_balanced_acc")
+    early_stopping_patience = tc.get("early_stopping_patience")
+    if early_stopping_patience is not None and int(early_stopping_patience) < 1:
+        raise ValueError("train.early_stopping_patience must be positive or null")
+    early_stopping_min_delta = float(tc.get("early_stopping_min_delta", 0.0))
+    if early_stopping_min_delta < 0:
+        raise ValueError("train.early_stopping_min_delta must be non-negative")
     history, best_score, best_epoch, best_acc = [], float("-inf"), 0, 0.0
+    epochs_without_improvement = 0
+    epochs_completed = 0
     t0 = time.time()
     for epoch in range(1, tc["epochs"] + 1):
         model.train()
@@ -125,22 +176,51 @@ def main() -> None:
             total += labels.size(0)
             loop.set_postfix(loss=f"{loss_sum/total:.4f}", acc=f"{100.*correct/total:.2f}")
         val_metrics = evaluate_loader(model, val_loader, device, criterion)
-        row = {"epoch": epoch, "train_loss": loss_sum / total,
-               "train_acc": 100.0 * correct / total,
-               "lr": optimizer.param_groups[0]["lr"], **val_metrics}
+        group_lrs = {
+            group["group_name"]: group["lr"] for group in optimizer.param_groups
+        }
+        scheduled_lrs = {}
+        for group_name, group_lr in group_lrs.items():
+            model_part = "head" if group_name.startswith("head_") else "backbone"
+            scheduled_lrs.setdefault(model_part, group_lr)
+        row = {
+            "epoch": epoch,
+            "train_loss": loss_sum / total,
+            "train_acc": 100.0 * correct / total,
+            "lr": scheduled_lrs.get("backbone", backbone_lr),
+            "lr_backbone": scheduled_lrs.get("backbone", backbone_lr),
+            "lr_head": scheduled_lrs.get("head", head_lr),
+            "lr_groups": group_lrs,
+            **val_metrics,
+        }
         history.append(row)
         print(f"  val acc {row['val_acc']:.2f}% | macro-F1 {row['val_macro_f1']:.3f} "
               f"| val loss {row['val_loss']:.4f}")
         score = row[selection_metric]
-        if score > best_score:
+        if score > best_score + early_stopping_min_delta:
             best_score, best_acc, best_epoch = score, row["val_acc"], epoch
+            epochs_without_improvement = 0
             save_checkpoint(model, os.path.join(out_dir, "best_model.pth"), class_names,
                             cfg["model"]["name"], cfg["data"]["img_size"])
+        else:
+            epochs_without_improvement += 1
         scheduler.step()
+        epochs_completed = epoch
+        if (
+            early_stopping_patience is not None
+            and epochs_without_improvement >= int(early_stopping_patience)
+        ):
+            print(
+                f"Early stopping after {epoch} epochs: {selection_metric} did not "
+                f"improve for {early_stopping_patience} consecutive epochs."
+            )
+            break
 
     with open(os.path.join(out_dir, "history.json"), "w") as fh:
         json.dump({"history": history, "best_val_acc": best_acc, "best_score": best_score,
                    "selection_metric": selection_metric, "best_epoch": best_epoch,
+                   "epochs_completed": epochs_completed,
+                   "stopped_early": epochs_completed < int(tc["epochs"]),
                    "class_names": class_names, "seconds": time.time() - t0, "config": cfg}, fh, indent=2)
     print(f"Best {selection_metric} {best_score:.4f} at epoch {best_epoch} (val acc {best_acc:.2f}%)")
 

@@ -2,12 +2,16 @@
 
 ## What the notebook currently demonstrates
 
-The notebook documents a ConvNeXt-Tiny training attempt, but its executed code and
-saved output disagree: the visible label code assigns every image to the first class,
-while the output shows a 14-class distribution and high validation accuracy. Treat those
-notebook metrics as historical, unverified output. Do not put them forward as a verified
-benchmark. The packaged `src/satscene` workflow parses YOLO labels and is the source of
-truth for a fresh run.
+The current `GIS_project_original.ipynb` compares ConvNeXtV2-Tiny, SwinV2-Tiny, and
+DINOv2 ViT-S/14. Its code calls `collect_split` from `src/satscene/labels.py` to derive
+image labels from YOLO annotations. The saved output reports 700 labeled training images,
+200 labeled validation images, all 14 classes, and no skipped images for those two splits.
+
+The saved validation results are still limited evidence: each model has one recorded
+seed, and checkpoints are selected using the same 200-image validation split used for
+comparison. Report them as single-run validation results, not as a stable model ranking
+or an estimate from the held-out test set. The packaged command-line trainer also uses
+the shared `src/satscene` label parser and is a separate training workflow.
 
 The current dataset has only 1,000 images, class labels are inferred from detection
 annotations, and the JPEGs are not georeferenced. This supports a small remote-sensing
@@ -42,6 +46,12 @@ validation macro-F1 (the current default) because the classes are imbalanced. Re
 hardware, software versions, seed, config, duration, and checkpoint identifier.
 
 ### Gate 3 — Diagnose generalization
+
+The initial ConvNeXtV2 fine-tuning candidate is available in
+`configs/convnextv2_finetune.yaml`. It uses a lower backbone learning rate than head
+learning rate, one warm-up epoch, cosine decay, and validation-accuracy checkpoint
+selection with macro-F1 and balanced accuracy still recorded. Its output is isolated in
+`runs/convnextv2_lr_tune/`; it has not been run yet and is not a measured improvement.
 
 1. Train at least three seeds for the selected recipe if compute permits; report mean and
    standard deviation for validation metrics. Keep single-run conclusions clearly marked.
@@ -90,8 +100,9 @@ python scripts/plot_training_history.py runs/convnext_tiny/history.json
 | ECE and multiclass Brier score | Diagnose confidence calibration | ECE depends on binning; state its bin count |
 | Train/validation loss and metric curves | Reveals overfitting and training instability | Training accuracy is augmented/train-mode in this implementation |
 
-Avoid reporting only accuracy. The old 80.5% validation accuracy is checkpoint-selected,
-and its originating notebook run is not verified because of the label-code/output conflict.
+Avoid reporting only accuracy. The archived ConvNeXtV2-Tiny result is 80.0% validation
+accuracy on 200 images (160 correct), selected from one run. Its 95% Wilson interval is
+approximately 73.9–85.0%; this interval does not capture variation from retraining.
 
 ## Presentation flow (7 minutes)
 

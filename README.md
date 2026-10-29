@@ -1,26 +1,26 @@
 # SatScene: Satellite Scene Classification with Pretrained Vision Models
 
-**Research software · Version 0.1.0 · 2026**
+<div align="center">
 
-**S. M. Gazzali Arafat Nishan**
+**S M Gazzali Arafat Nishan**<br>
+*Faculty of Computer Science, HSE University, Moscow, Russia*<br>
+*Geospatial Data Science · Software Project · Version 0.1.0 · 2026*
 
-**Project report; no arXiv identifier or peer-reviewed publication is claimed.**
+</div>
 
 ---
 
 ## Abstract
 
-SatScene is a remote-sensing image-classification project and reproducible software
-workflow for assigning one of 14 land-use scene labels to satellite or aerial images.
-The repository includes YOLO-annotation parsing, transfer-learning training and
-evaluation, a browser interface, and an optional native macOS interface. A comparison
-of three pretrained vision backbones on a 200-image validation split found that
-ConvNeXtV2-Tiny ranked first in validation accuracy (80.0%), macro-F1 (0.788), and
-top-3 accuracy (94.0%), narrowly ahead of SwinV2-Tiny. DINOv2 ViT-S/14 performed
-substantially worse under the same fine-tuning protocol. These are single-run
-validation results, not estimates from the held-out test set. The results support a
-software and experimental comparison, not a claim of operationally reliable
-classification.
+SatScene is a remote-sensing image-classification project and software workflow for
+assigning one of 14 land-use labels to satellite or aerial RGB images. It includes YOLO
+annotation parsing, transfer-learning training and evaluation, and browser and macOS
+interfaces for ranked predictions and analyst review. Archived validation artifacts
+compare ConvNeXtV2-Tiny, SwinV2-Tiny, and DINOv2 ViT-S/14 on 200 images. ConvNeXtV2-Tiny
+has the highest recorded accuracy (80.0%) and macro-F1 (0.788), one image ahead of
+SwinV2-Tiny; DINOv2 ViT-S/14 records 38.0% accuracy. These validation metrics come from
+one run per model. The notebook uses the repository's YOLO label parser and its saved
+output reports the corresponding 14-class train and validation distributions.
 
 **Keywords —** remote sensing; satellite imagery; scene classification; transfer
 learning; ConvNeXt; Swin Transformer; DINOv2; decision support
@@ -61,10 +61,11 @@ checkpoints.
 
 ![SatScene project pipeline: data and label construction, model comparison, packaged training, evaluation, and inference](docs/figures/project-pipeline.svg)
 
-The notebook comparison chooses a model using validation macro-F1; it does not by
-itself establish generalization. Keep the test split out of model selection and use it
-only for final evaluation. The class suggestion is static decision support, not an
-automated GIS analysis.
+The comparison notebook derives labels with the maintained YOLO parser and reports the
+resulting class distributions. Each model has one saved run, so the results do not measure
+variation across seeds. Keep the test split out of model selection and use it only for
+final evaluation. The class suggestion is static decision support, not an automated GIS
+analysis.
 
 ## 2. Dataset and label construction
 
@@ -83,7 +84,7 @@ skipped. This provides a single-label classification target, but the dominant de
 object is only a proxy for the overall scene.
 
 The training split is imbalanced: the recorded distribution ranges from 118 City images
-to 16 River images (7.4:1). The dataset is not included in Git. The downloaded Roboflow
+to 17 River images (6.9:1). The dataset is not included in Git. The downloaded Roboflow
 export identifies its license as CC BY 4.0; verify attribution and redistribution terms
 at the [source](https://universe.roboflow.com/image-captioning-for-remote-sensingdata-0zids/remote-sensing-data/dataset/2)
 before reuse. Dataset provenance is also recorded in
@@ -107,9 +108,9 @@ updates the head and the pretrained backbone.
 
 | Model | Architecture and what it contributes here | `timm` model identifier | Input |
 | --- | --- | --- | ---: |
-| **ConvNeXtV2-Tiny** | Hierarchical convolutional stages combine local texture and progressively larger spatial features. ConvNeXtV2 adds Global Response Normalization (GRN) to its ConvNeXt blocks [2]. This is the best-performing candidate in this validation run. | `convnextv2_tiny.fcmae_ft_in1k` | 224 × 224 |
-| **SwinV2-Tiny** | A hierarchical vision transformer computes attention within local windows, shifting windows between blocks so information can cross window boundaries. Its patch-merging stages capture increasingly broad context [4]; this run uses the model's 256 × 256 input configuration. | `swinv2_tiny_window8_256.ms_in1k` | 256 × 256 |
-| **DINOv2 ViT-S/14** | A Vision Transformer divides the image into 14 × 14-pixel patches and uses global self-attention across patch tokens. Its backbone starts from DINOv2 self-supervised visual features (`lvd142m`; [6]); the project then fine-tunes it for the 14 labeled scene classes. | `vit_small_patch14_dinov2.lvd142m` | 224 × 224 |
+| **ConvNeXtV2-Tiny** | Hierarchical convolutional stages combine local texture with progressively larger spatial features. ConvNeXtV2 adds Global Response Normalization (GRN) to ConvNeXt blocks [2]. | `convnextv2_tiny.fcmae_ft_in1k` | 224 × 224 |
+| **SwinV2-Tiny** | Hierarchical vision Transformer with local-window attention, shifted windows, and patch merging [4]. | `swinv2_tiny_window8_256.ms_in1k` | 256 × 256 |
+| **DINOv2 ViT-S/14** | Global self-attention over 14 × 14-pixel patch tokens, initialized from self-supervised DINOv2 features (`lvd142m`; [6]). | `vit_small_patch14_dinov2.lvd142m` | 224 × 224 |
 
 #### Architecture diagrams
 
@@ -148,14 +149,17 @@ YOLO export + image files
     calibration, and per-class errors
 ```
 
-All three runs use seed 42, batch size 16, and 10 epochs. The input is 224 × 224 for
-ConvNeXtV2 and DINOv2, and 256 × 256 for SwinV2. The augmentation and
+All three saved run configurations specify seed 42, batch size 16, and 10 epochs. The
+input is 224 × 224 for ConvNeXtV2 and DINOv2, and 256 × 256 for SwinV2. The augmentation and
 ImageNet-normalization pipeline is shared; only resize dimensions vary. Training uses
 the 700-image train split and model selection uses the 200-image validation split. The
 100-image test split is not used to select these comparison checkpoints. See
 [`src/satscene/data.py`](src/satscene/data.py) for transforms and loaders and
 [`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb) for the
-comparison training loop.
+comparison training code. The notebook reports 700 labeled training images, 200 labeled
+validation images, and no skipped images for those splits. The saved configurations and
+epoch histories document one run per model; repeat seeds before claiming a dependable
+ranking.
 
 ConvNeXtV2 extends the modernized ConvNet design of ConvNeXt [1,2], using local
 convolutions and hierarchical feature maps. SwinV2 [3,4] uses shifted-window attention
@@ -190,8 +194,8 @@ $$
 +\log\!\left(\sum_{c=0}^{13}\exp(z_{i,c})\right)\right].
 $$
 
-The comparison uses AdamW [7] ($\eta=3\times10^{-4}$, weight decay $\lambda=10^{-4}$) and cosine
-annealing [8] over 10 epochs. The per-epoch learning rate follows
+The comparison uses AdamW [7] ($\eta=3\times10^{-4}$, weight decay $\lambda=10^{-4}$)
+and cosine annealing [8] over 10 epochs. The per-epoch learning rate follows
 
 $$
 \eta_t=\eta_{\min}+\frac{\eta_{\max}-\eta_{\min}}{2}
@@ -269,12 +273,14 @@ for an analyst; the application does not carry them out.
 
 ## 4. Experimental protocol
 
-The reported architecture comparison uses the validation split ($n=200$) for model
-selection and comparison. Its results are from one run and have no across-seed
-uncertainty estimate. Accuracy intervals below are 95% Wilson score intervals; they
+The saved architecture-comparison artifacts use the validation split ($n=200$) for
+model selection and comparison. Each model has one recorded run and no estimate of
+variation across random seeds. Accuracy intervals below are 95% Wilson score intervals; they
 describe binomial sampling uncertainty for the validation sample, not variation from
 retraining. The intervals overlap, so the small lead between the top two models should
-not be treated as evidence of a statistically reliable difference.
+not be treated as evidence of a statistically reliable difference. The notebook's
+maintained label parser and saved class-distribution output agree; the main uncertainty
+is the one-seed experiment and small validation sample.
 
 The test set is intended for final evaluation after the method is selected. The
 separately archived test output is from the ConvNeXt-Tiny command-line pipeline, not
@@ -376,11 +382,25 @@ per-class scores are sensitive to the small number of examples in each class.
 
 ### 5.5 Held-out test evaluation
 
-The packaged ConvNeXt-Tiny command-line pipeline can evaluate the selected checkpoint
-on the held-out test split and writes metrics and per-image predictions to its output
-directory. This evaluation is separate from the three-model validation comparison;
-the comparison checkpoints have not been ranked using test results. Reserve the test
-split for final assessment after model selection.
+The repository also includes an archived test output from the packaged ConvNeXt-Tiny
+pipeline. It is a different workflow and checkpoint from the three-model comparison.
+
+| Packaged-model test metric | Archived value |
+| --- | ---: |
+| Accuracy | 6/100 (6.0%; 95% Wilson CI: 2.8–12.5%) |
+| Macro-F1 | 0.008 |
+| Balanced accuracy | 0.071 |
+| Top-3 accuracy | 14.0% |
+| Top-label ECE | 0.940 |
+| Multiclass Brier score | 1.88 |
+| Predictions | Agriculture for all 100 images |
+
+The test split contains six Agriculture labels, so this output matches the constant
+Agriculture baseline in accuracy. This is a failure case, not evidence of useful test
+performance: the model predicts the same class for every image. Details are in
+[`iodata/sample_output/metrics_test.json`](iodata/sample_output/metrics_test.json).
+The packaged evaluator can write a new held-out evaluation after model selection; do not
+tune against this already-inspected test split.
 
 ## 6. Discussion
 
@@ -393,11 +413,11 @@ validation sample is small, and no repeated-seed uncertainty is available. DINOv
 ViT-S/14 performed substantially worse under the recorded fine-tuning setup, despite
 its large self-supervised pretraining.
 
-The per-class report shows high validation F1 for Parking, Port, Beach, and Mountain,
-but lower F1 for Grassland, Forest, and River. Small class supports make these estimates
-uncertain. Validation metrics alone do not establish robust performance. Further
-evaluation across repeated runs and a carefully audited held-out test set is needed
-before any deployment claim.
+The archived per-class report shows high validation F1 for Parking, Port, Beach, and
+Mountain, but lower F1 for Grassland, Forest, and River. Small class supports make these
+estimates uncertain. The archived comparison should be interpreted as one run per model,
+not as a stable ranking. Repeated seeds and a carefully audited held-out test evaluation
+are needed before making broader performance claims.
 
 Related EuroSAT studies examine deep-learning classifiers and compare pretrained
 ResNet and GoogLeNet variants [21], [22]. They provide useful context for satellite
@@ -420,10 +440,9 @@ validation results in this repository.
 - **Validation-selected results:** the reported comparison values are model-selection
   metrics, not final test estimates.
 
-The earlier notebook also contains historical output that is not used as a verified
-result because its saved label-generation code and displayed class-distribution output
-disagree. The current comparison values above are taken from the three archived run
-folders.
+The validation split is small and is reused for checkpoint and model selection. The
+comparison has one recorded seed per model, so it does not quantify run-to-run variation.
+The separate packaged-model test output is historical and is reported as a failure case.
 
 ## 8. Reproducibility and use
 
@@ -463,13 +482,26 @@ Training writes the selected checkpoint and history to `runs/convnext_tiny/`. Ev
 writes aggregate metrics, predictions, and diagnostic plots in the configured output
 directory. Reserve the test split for final evaluation after model selection.
 
+To run a separate ConvNeXtV2 fine-tuning candidate based on the comparison model, use
+[`configs/convnextv2_finetune.yaml`](configs/convnextv2_finetune.yaml):
+
+```bash
+python -m satscene.train --config configs/convnextv2_finetune.yaml
+```
+
+It uses separate backbone and head learning rates, one warm-up epoch, cosine decay,
+validation-accuracy checkpoint selection, and early stopping. It writes to
+`runs/convnextv2_lr_tune/`, keeping the archived comparison outputs intact. Its accuracy
+has not been measured yet.
+
 ### 8.4 Reproduce the three-model comparison
 
-Open [`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb)
-in Jupyter or Google Colab and run the comparison workflow. It fine-tunes the three
-models described in [Section 3](#3-methods) and writes per-model reports and plots under
-`runs/`. The large `.pth` checkpoint files are deliberately excluded from Git; rerun
-the notebook to recreate them.
+The comparison notebook is included at
+[`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb), with
+saved configurations and metrics under `runs/`. It uses `src/satscene/labels.py` to parse
+the YOLO files and construct image labels. The large `.pth` checkpoint files are excluded
+from Git. To assess variability, rerun each model with multiple seeds under the same
+protocol, record the code revision and environment, and keep the test split untouched.
 
 ### 8.5 Run the applications and tests
 
@@ -502,33 +534,73 @@ their size; supply a locally available checkpoint using `--checkpoint` where nee
 | `src/satscene/agent.py`, `knowledge.py` | Prediction report and static class suggestions |
 | `src/satscene/app.py`, `desktop.py` | Browser and optional macOS interfaces |
 | `configs/default.yaml` | Packaged ConvNeXt-Tiny configuration |
+| `configs/convnextv2_finetune.yaml` | Separate ConvNeXtV2 tuning candidate |
 | `notebooks/` | Three-model comparison workflow |
 | `runs/` | Comparison metrics, predictions, configurations, and plots |
 | `iodata/` | Sample input and archived test-output example |
-| `docs/` | macOS setup and experiment protocol |
+| `docs/` | Experiment plan, mathematical methods, setup, submission, and demo guides |
 | `tests/` | Automated tests |
 | `resources/` | Dataset provenance and references |
 
 The comparison summaries and diagnostics are committed; trained checkpoint files are
 not.
 
+### Project documentation
+
+- [Mathematical methods and full bibliography](docs/MATHEMATICAL_METHODS.md)
+- [Experiment plan](docs/EXPERIMENT_PLAN.md)
+- [macOS setup](docs/MAC_SETUP.md)
+- [Submission checklist](docs/SUBMISSION_CHECKLIST.md)
+- [Demo recording checklist](docs/DEMO_RECORDING_CHECKLIST.md)
+- [Seven-minute presentation outline](docs/SEVEN_MINUTE_PRESENTATION.md)
+- [Sample input and output](iodata/README.md)
+- [Dataset provenance](resources/README.md)
+
 ## References and licenses
 
-[1] Z. Liu et al., “A ConvNet for the 2020s,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2022. [Online]. Available: https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html
+[1] Z. Liu et al., “A ConvNet for the 2020s,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2022. [Online]. Available: [CVF](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html).
 
-[2] S. Woo et al., “ConvNeXt V2: Co-designing and scaling ConvNets with masked autoencoders,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2023. [Online]. Available: https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html
+[2] S. Woo et al., “ConvNeXt V2: Co-designing and scaling ConvNets with masked autoencoders,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2023. [Online]. Available: [CVF](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html).
 
-[3] Z. Liu et al., “Swin Transformer: Hierarchical vision Transformer using shifted windows,” in *Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)*, 2021. [Online]. Available: https://openaccess.thecvf.com/content/ICCV2021/html/Liu_Swin_Transformer_Hierarchical_Vision_Transformer_Using_Shifted_Windows_ICCV_2021_paper.html
+[3] Z. Liu et al., “Swin Transformer: Hierarchical vision Transformer using shifted windows,” in *Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)*, 2021. [Online]. Available: [CVF](https://openaccess.thecvf.com/content/ICCV2021/html/Liu_Swin_Transformer_Hierarchical_Vision_Transformer_Using_Shifted_Windows_ICCV_2021_paper.html).
 
-[4] Z. Liu et al., “Swin Transformer V2: Scaling up capacity and resolution,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2022. [Online]. Available: https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html
+[4] Z. Liu et al., “Swin Transformer V2: Scaling up capacity and resolution,” in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, 2022. [Online]. Available: [CVF](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html).
 
-[5] A. Dosovitskiy et al., “An image is worth 16×16 words: Transformers for image recognition at scale,” in *Proc. Int. Conf. Learn. Represent. (ICLR)*, 2021. [Online]. Available: https://openreview.net/forum?id=YicbFdNTTy
+[5] A. Dosovitskiy et al., “An image is worth 16×16 words: Transformers for image recognition at scale,” in *Proc. Int. Conf. Learn. Represent. (ICLR)*, 2021. [Online]. Available: [OpenReview](https://openreview.net/forum?id=YicbFdNTTy).
 
-[6] M. Oquab et al., “DINOv2: Learning robust visual features without supervision,” arXiv:2304.07193, 2023. [Online]. Available: https://arxiv.org/abs/2304.07193
+[6] M. Oquab et al., “DINOv2: Learning robust visual features without supervision,” arXiv:2304.07193, 2023. [Online]. Available: [arXiv](https://arxiv.org/abs/2304.07193).
+
+[7] I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,” in *Proc. Int. Conf. Learn. Represent. (ICLR)*, 2019. [Online]. Available: [OpenReview](https://openreview.net/forum?id=Bkg6RiCqY7).
+
+[8] I. Loshchilov and F. Hutter, “SGDR: Stochastic gradient descent with warm restarts,” in *Proc. Int. Conf. Learn. Represent. (ICLR)*, 2017. [Online]. Available: [arXiv](https://arxiv.org/abs/1608.03983).
+
+[9] G. W. Brier, “Verification of forecasts expressed in terms of probability,” *Mon. Weather Rev.*, vol. 78, no. 1, pp. 1–3, Jan. 1950, doi: `10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2`.
+
+[10] C. Guo, G. Pleiss, Y. Sun, and K. Q. Weinberger, “On calibration of modern neural networks,” in *Proc. 34th Int. Conf. Mach. Learn. (ICML)*, PMLR, vol. 70, 2017, pp. 1321–1330. [Online]. Available: [PMLR](https://proceedings.mlr.press/v70/guo17a.html).
+
+[11] E. B. Wilson, “Probable inference, the law of succession, and statistical inference,” *J. Amer. Stat. Assoc.*, vol. 22, no. 158, pp. 209–212, Jun. 1927, doi: `10.1080/01621459.1927.10502953`.
+
+[12] R. G. Newcombe, “Two-sided confidence intervals for the single proportion: Comparison of seven methods,” *Stat. Med.*, vol. 17, no. 8, pp. 857–872, Apr. 1998, doi: `10.1002/(SICI)1097-0258(19980430)17:8<857::AID-SIM777>3.0.CO;2-E`.
+
+[13] S. Dutta and M. Das, “Remote sensing scene classification under scarcity of labelled samples—A survey of the state-of-the-arts,” *Comput. Geosci.*, vol. 171, Art. no. 105295, 2023, doi: [10.1016/j.cageo.2022.105295](https://doi.org/10.1016/j.cageo.2022.105295).
+
+[14] G.-S. Xia et al., “AID: A benchmark data set for performance evaluation of aerial scene classification,” *IEEE Trans. Geosci. Remote Sens.*, vol. 55, no. 7, pp. 3965–3981, Jul. 2017, doi: 10.1109/TGRS.2017.2685945.
+
+[15] G. Cheng, J. Han, and X. Lu, “Remote sensing image scene classification: Benchmark and state of the art,” *Proc. IEEE*, vol. 105, no. 10, pp. 1865–1883, Oct. 2017. [Online]. Available: [arXiv](https://arxiv.org/abs/1703.00121).
+
+[16] P. Helber et al., “EuroSAT: A novel dataset and deep learning benchmark for land use and land cover classification,” *IEEE J. Sel. Topics Appl. Earth Observ. Remote Sens.*, vol. 12, 2019. [Online]. Available: [arXiv](https://arxiv.org/abs/1709.00029).
+
+[17] G. Sumbul, M. Charfuelan, B. Demir, and V. Markl, “BigEarthNet: A large-scale benchmark archive for remote sensing image understanding,” in *Proc. IEEE Int. Geosci. Remote Sens. Symp. (IGARSS)*, 2019, pp. 5901–5904. [Online]. Available: [arXiv](https://arxiv.org/abs/1902.06148).
+
+[18] PyTorch, “CrossEntropyLoss,” “AdamW,” and “CosineAnnealingLR,” *PyTorch Documentation*. [Online]. Available: [PyTorch](https://docs.pytorch.org/docs/stable/).
+
+[19] R. Wightman et al., “PyTorch Image Models (timm),” *timm Documentation*. [Online]. Available: [timm](https://huggingface.co/docs/timm/reference/models).
+
+[20] “Remote Sensing Satellite Images,” Kaggle dataset; Roboflow, “Remote Sensing Data,” YOLOv8 export. [Online]. Available: [Kaggle](https://www.kaggle.com/datasets/umeradnaan/remote-sensing-satellite-images) and [Roboflow Universe](https://universe.roboflow.com/image-captioning-for-remote-sensingdata-0zids/remote-sensing-data/dataset/2).
 
 [21] G. V. Lakshmi, P. Prathik, and G. Geetha, “Satellite Image Classification Using Deep Learning,” in *Proc. 2024 2nd International Conference on Signal Processing, Communication, Power and Embedded System (SCOPES)*, Paralakhemundi Campus, Centurion University of Technology and Management, Odisha, India, 2024, pp. 1–5, doi: [10.1109/SCOPES64467.2024.10990975](https://doi.org/10.1109/SCOPES64467.2024.10990975).
 
-[22] D. Yadav, K. Kapoor, A. K. Yadav, M. Kumar, A. Jain, and J. Morato Lara, “Satellite image classification using deep learning approach,” *Earth Science Informatics*, vol. 17, no. 3, pp. 2495–2508, 2024, doi: [10.1007/s12145-024-01301-x](https://doi.org/10.1007/s12145-024-01301-x).
+[22] D. Yadav, K. Kapoor, A. K. Yadav, M. Kumar, A. Jain, and J. Morato Lara, “Satellite image classification using deep learning approach,” *Earth Sci. Inform.*, vol. 17, no. 3, pp. 2495–2508, 2024, doi: [10.1007/s12145-024-01301-x](https://doi.org/10.1007/s12145-024-01301-x).
 
 The mathematical methods note contains references **[7–20]** for optimization,
 statistical intervals, probability scoring, remote-sensing datasets, and implementation

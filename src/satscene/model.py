@@ -36,6 +36,58 @@ def count_params_m(model: torch.nn.Module) -> float:
     return sum(p.numel() for p in model.parameters()) / 1e6
 
 
+def finetuning_param_groups(
+    model: torch.nn.Module,
+    backbone_lr: float,
+    head_lr: float,
+    weight_decay: float,
+) -> list[dict]:
+    """Split pretrained-body and classifier-head parameters for AdamW.
+
+    Biases and one-dimensional parameters (including normalization scales) receive
+    no weight decay. ``get_classifier`` is supplied by the ``timm`` model API, so
+    this keeps the grouping independent of architecture-specific head names.
+    """
+    classifier = model.get_classifier()
+    if isinstance(classifier, torch.nn.Module):
+        head_ids = {id(param) for param in classifier.parameters()}
+    elif isinstance(classifier, (tuple, list)):
+        head_ids = {
+            id(param)
+            for module in classifier
+            if isinstance(module, torch.nn.Module)
+            for param in module.parameters()
+        }
+    else:
+        head_ids = set()
+    if not head_ids:
+        raise ValueError("Could not identify classifier parameters for fine-tuning")
+
+    buckets: dict[tuple[bool, bool], list[torch.nn.Parameter]] = {}
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue
+        is_head = id(param) in head_ids
+        no_decay = param.ndim <= 1 or name.endswith(".bias")
+        buckets.setdefault((is_head, no_decay), []).append(param)
+
+    groups = []
+    for is_head in (False, True):
+        for no_decay in (False, True):
+            params = buckets.get((is_head, no_decay), [])
+            if not params:
+                continue
+            group = "head" if is_head else "backbone"
+            group += "_no_decay" if no_decay else "_decay"
+            groups.append({
+                "params": params,
+                "lr": head_lr if is_head else backbone_lr,
+                "weight_decay": 0.0 if no_decay else weight_decay,
+                "group_name": group,
+            })
+    return groups
+
+
 def load_checkpoint(model: torch.nn.Module, path: str, device) -> torch.nn.Module:
     state = torch.load(path, map_location=device, weights_only=True)
     # New checkpoints include metadata; accept the original raw state dict too.

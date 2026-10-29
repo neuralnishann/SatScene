@@ -11,7 +11,7 @@ train:
   epochs: 10
   batch_size: 32
   num_workers: 2
-  class_weighted_loss: false   # set true to counter the 118:16 City:River imbalance
+  class_weighted_loss: false   # set true to counter the 118:17 City:River imbalance
   selection_metric: val_macro_f1  # better reflects minority-class performance than accuracy
 optim:
   lr: 3.0e-4
