@@ -1,10 +1,10 @@
-<div align="center">
-
 # SatScene: Satellite Scene Classification with Pretrained Vision Models
 
-*Geospatial Data Science · Home Assignment 1 · Software Project · 2026*
+**Research software · Version 0.1.0 · 2026**
 
-</div>
+**S. M. Gazzali Arafat Nishan**
+
+**Project report; no arXiv identifier or peer-reviewed publication is claimed.**
 
 ---
 
@@ -22,7 +22,7 @@ validation results, not estimates from the held-out test set. The results suppor
 software and experimental comparison, not a claim of operationally reliable
 classification.
 
-**Keywords:** remote sensing; satellite imagery; scene classification; transfer
+**Keywords —** remote sensing; satellite imagery; scene classification; transfer
 learning; ConvNeXt; Swin Transformer; DINOv2; decision support
 
 ## Contents
@@ -76,7 +76,7 @@ The export contains 1,000 images in supplied train, validation, and test splits
 > Agriculture · Airport · Beach · City · Desert · Forest · Grassland · Highway · Lake ·
 > Mountain · Parking · Port · Railway · River
 
-The export annotations are object detections rather than scene labels. For each image,
+The export annotations are object detections rather than scene labels [20]. For each image,
 the implementation chooses the most frequent class ID in its YOLO annotation file;
 ties go to the class appearing first. Images with missing or empty annotation files are
 skipped. This provides a single-label classification target, but the dominant detected
@@ -107,9 +107,9 @@ updates the head and the pretrained backbone.
 
 | Model | Architecture and what it contributes here | `timm` model identifier | Input |
 | --- | --- | --- | ---: |
-| **ConvNeXtV2-Tiny** | Hierarchical convolutional stages combine local texture and progressively larger spatial features. ConvNeXtV2 adds Global Response Normalization (GRN) to its ConvNeXt blocks (Woo et al., 2023). This is the best-performing candidate in this validation run. | `convnextv2_tiny.fcmae_ft_in1k` | 224 × 224 |
-| **SwinV2-Tiny** | A hierarchical vision transformer computes attention within local windows, shifting windows between blocks so information can cross window boundaries. Its patch-merging stages capture increasingly broad context (Liu et al., 2022); this run uses the model's 256 × 256 input configuration. | `swinv2_tiny_window8_256.ms_in1k` | 256 × 256 |
-| **DINOv2 ViT-S/14** | A Vision Transformer divides the image into 14 × 14-pixel patches and uses global self-attention across patch tokens. Its backbone starts from DINOv2 self-supervised visual features (`lvd142m`; Oquab et al., 2023); the project then fine-tunes it for the 14 labeled scene classes. | `vit_small_patch14_dinov2.lvd142m` | 224 × 224 |
+| **ConvNeXtV2-Tiny** | Hierarchical convolutional stages combine local texture and progressively larger spatial features. ConvNeXtV2 adds Global Response Normalization (GRN) to its ConvNeXt blocks [2]. This is the best-performing candidate in this validation run. | `convnextv2_tiny.fcmae_ft_in1k` | 224 × 224 |
+| **SwinV2-Tiny** | A hierarchical vision transformer computes attention within local windows, shifting windows between blocks so information can cross window boundaries. Its patch-merging stages capture increasingly broad context [4]; this run uses the model's 256 × 256 input configuration. | `swinv2_tiny_window8_256.ms_in1k` | 256 × 256 |
+| **DINOv2 ViT-S/14** | A Vision Transformer divides the image into 14 × 14-pixel patches and uses global self-attention across patch tokens. Its backbone starts from DINOv2 self-supervised visual features (`lvd142m`; [6]); the project then fine-tunes it for the 14 labeled scene classes. | `vit_small_patch14_dinov2.lvd142m` | 224 × 224 |
 
 #### Architecture diagrams
 
@@ -117,19 +117,19 @@ These simplified diagrams show the backbone and 14-class prediction path used in
 SatScene. They are original, repository-local SVG schematics based on the cited model
 papers, not reproductions of the papers' figures.
 
-**ConvNeXtV2-Tiny** — hierarchical convolutional stages with GRN in the ConvNeXtV2
-blocks ([Woo et al., 2023](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html)).
+**ConvNeXtV2-Tiny [2]** — hierarchical convolutional stages with GRN in the
+ConvNeXtV2 blocks. The architecture builds on ConvNeXt [1].
 
 ![ConvNeXtV2-Tiny architecture: convolutional stem, four hierarchical stages, global pooling, and 14-class head](docs/figures/convnextv2.svg)
 
-**Swin Transformer V2-Tiny** — hierarchical shifted-window attention, with patch
-merging between stages ([Liu et al., 2022](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html)).
+**Swin Transformer V2-Tiny [4]** — hierarchical shifted-window attention, with
+patch merging between stages; its shifted-window design follows Swin Transformer [3].
 
 ![SwinV2-Tiny architecture: patch embedding, shifted-window attention stages, patch merging, and 14-class head](docs/figures/swinv2.svg)
 
-**DINOv2 ViT-S/14** — global self-attention over patch tokens, initialized from
-self-supervised DINOv2 features and fine-tuned for this project
-([Oquab et al., 2023](https://arxiv.org/abs/2304.07193)).
+**DINOv2 ViT-S/14 [6]** — global self-attention over patch tokens, initialized
+from self-supervised DINOv2 features. The Transformer patch-token formulation is
+introduced in ViT [5].
 
 ![DINOv2 ViT-S/14 architecture: patch tokens, global self-attention, class-token representation, and 14-class head](docs/figures/dinov2.svg)
 
@@ -157,63 +157,80 @@ the 700-image train split and model selection uses the 200-image validation spli
 [`notebooks/GIS_project_original.ipynb`](notebooks/GIS_project_original.ipynb) for the
 comparison training loop.
 
-Architecturally, ConvNeXtV2 builds on the modernized ConvNet design of ConvNeXt (Liu et
-al., 2022; Woo et al., 2023), using convolutional filters for local patterns and
-hierarchical feature maps; SwinV2 uses windowed attention to model spatial relationships
-with less cost than global attention at every layer (Liu et al., 2022); DINOv2 ViT-S/14
-uses global attention over patch tokens and relies on a large self-supervised pretrained
-representation (Oquab et al., 2023). These differences are plausible inductive biases
-for aerial scenes, not guarantees of performance: the results below measure these exact
-pretrained checkpoints and this particular small-data fine-tuning setup.
+ConvNeXtV2 extends the modernized ConvNet design of ConvNeXt [1,2], using local
+convolutions and hierarchical feature maps. SwinV2 [3,4] uses shifted-window attention
+to communicate spatial context with fewer pairwise interactions than global attention
+at high token counts. ViT introduced the patch-token Transformer formulation [5], and
+DINOv2 supplies self-supervised visual representations [6]. These are different
+inductive biases for aerial scenes, not guarantees of performance: the results below
+measure these exact pretrained checkpoints under this small-data fine-tuning setup.
 
 ### 3.3 Mathematical formulation
 
-All three comparison systems implement an image-to-class mapping. Given normalized
-image `x`, pretrained backbone `fθ`, and a 14-class linear head, the model produces
-logits `z` and class probabilities `p`:
+Equations use standard Markdown LaTeX delimiters (`$...$` inline and `$$...$$`
+for display). GitHub renders them with MathJax ([syntax reference](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions)),
+and VS Code's built-in Markdown preview supports KaTeX
+([preview documentation](https://code.visualstudio.com/docs/languages/markdown#_math-formula-rendering)).
 
-```text
-h = fθ(x)                         feature vector
-z = W h + b                       14 unnormalized class scores
-p_c = exp(z_c) / Σ_j exp(z_j)     softmax probability for class c
-ŷ = argmax_c p_c                  predicted class
-```
+All three comparison systems implement an image-to-class mapping. Given normalized
+image $\mathbf{x}$, pretrained backbone $f_{\boldsymbol{\theta}}$, and a 14-class
+linear head, the model produces logits $\mathbf{z}$ and class probabilities $\mathbf{p}$:
+
+$$
+\mathbf{h}=f_{\boldsymbol{\theta}}(\mathbf{x}),\qquad
+\mathbf{z}=\mathbf{W}\mathbf{h}+\mathbf{b}\in\mathbb{R}^{14},
+$$
+
+$$
+p_c=\frac{\exp(z_c)}{\sum_{j=0}^{13}\exp(z_j)},\qquad
+\hat{y}=\arg\max_{c\in\{0,\ldots,13\}}p_c.
+$$
 
 For a batch of `B` labeled images, fine-tuning minimizes multiclass cross-entropy:
 
-```text
-L = −(1/B) Σ_i log p_(i,y_i)
-  =  (1/B) Σ_i [−z_(i,y_i) + log Σ_c exp(z_(i,c))].
-```
+$$
+\mathcal{L}_{\mathrm{CE}}
+=-\frac{1}{B}\sum_{i=1}^{B}\log p_{i,y_i}
+=\frac{1}{B}\sum_{i=1}^{B}\left[-z_{i,y_i}
++\log\!\left(\sum_{c=0}^{13}\exp(z_{i,c})\right)\right].
+$$
 
-The comparison uses AdamW (`η = 3×10⁻⁴`, weight decay `λ = 10⁻⁴`) and cosine
-annealing over 10 epochs. The per-epoch learning rate follows
-`η_t = ½ η_max [1 + cos(πt/T_max)]` with `T_max = 10` and the default minimum
-learning rate of zero. The checkpoint is the epoch with the highest validation
+The comparison uses AdamW [7] ($\eta=3\times10^{-4}$, weight decay $\lambda=10^{-4}$) and cosine
+annealing [8] over 10 epochs. The per-epoch learning rate follows
+
+$$
+\eta_t=\eta_{\min}+\frac{\eta_{\max}-\eta_{\min}}{2}
+\left[1+\cos\!\left(\frac{\pi t}{T_{\max}}\right)\right],\qquad
+T_{\max}=10,\quad \eta_{\min}=0.
+$$
+
+The checkpoint is the epoch with the highest validation
 macro-F1. This is model selection on validation data, not an unbiased estimate of
 generalization.
 
 The architectures have different feature interaction costs. ConvNeXtV2 uses local
 convolutions in four hierarchical stages (Tiny depths `3, 3, 9, 3`) and global
-channel response normalization. SwinV2 uses self-attention within windows of `M×M`
-tokens, alternates shifted windows, and merges patches between stages. At a stage
-with `N` tokens and feature width `d`, window attention has pairwise-attention cost
-approximately `O(N M² d)`, while global attention has `O(N² d)`. DINOv2 ViT-S/14
-uses global attention over patch tokens: a 224×224 input gives `(224/14)² = 256`
-patch tokens, plus one class token, for sequence length `N = 257`. Its attention
-interaction term scales as `O(N² d)` per block. These costs describe attention
+channel response normalization. SwinV2 uses self-attention within windows of $M\times M$
+tokens [3,4], alternates shifted windows, and merges patches between stages. At a stage
+with $N$ tokens and feature width $d$, window attention has pairwise-attention cost
+approximately $\mathcal{O}(NM^2d)$, while global attention has $\mathcal{O}(N^2d)$.
+DINOv2 ViT-S/14 [6] uses global attention over patch tokens: a $224\times224$
+input gives $(224/14)^2=256$ patch tokens, plus one class token, for sequence
+length $N=257$. Its attention interaction term scales as $\mathcal{O}(N^2d)$ per
+block. These costs describe attention
 interactions, not full end-to-end FLOPs; projections, MLPs, convolution, and feature
 width also contribute. Full block equations, metric definitions, and derivations are
 in [Mathematical foundations](docs/MATHEMATICAL_METHODS.md).
 
-For class `c`, precision is `TP_c/(TP_c+FP_c)`, recall is
-`TP_c/(TP_c+FN_c)`, and `F1_c = 2·precision_c·recall_c/(precision_c+recall_c)`.
+For class $c$, precision is $\mathrm{TP}_c/(\mathrm{TP}_c+\mathrm{FP}_c)$, recall is
+$\mathrm{TP}_c/(\mathrm{TP}_c+\mathrm{FN}_c)$, and
+$\mathrm{F1}_c=2\,\mathrm{precision}_c\,\mathrm{recall}_c/(\mathrm{precision}_c+\mathrm{recall}_c)$.
 Macro-F1 is the unweighted mean of the 14 class F1 scores; balanced accuracy is the
-mean class recall. The accuracy interval uses the Wilson score method. For example,
-ConvNeXtV2 has `160/200 = 0.800` accuracy and a 95% Wilson interval of approximately
-`[0.739, 0.850]`; SwinV2 has `159/200 = 0.795`. Their accuracy gap is just
-`(160−159)/200 = 0.005` (one validation image). Their macro-F1 gap is approximately
-`0.7881−0.7817 = 0.0063`. Such small single-run gaps do not establish a stable ranking.
+mean class recall. The accuracy interval uses the Wilson score method [11,12]. For example,
+ConvNeXtV2 has $160/200=0.800$ accuracy and a 95% Wilson interval [11,12] of approximately
+$[0.739,0.850]$; SwinV2 has $159/200=0.795$. Their accuracy gap is just
+$(160-159)/200=0.005$ (one validation image). Their macro-F1 gap is approximately
+$0.7881-0.7817=0.0063$. Such small single-run gaps do not establish a stable ranking.
 
 ### 3.4 Improving the method for this task
 
@@ -257,7 +274,7 @@ for an analyst; the application does not carry them out.
 
 ## 4. Experimental protocol
 
-The reported architecture comparison uses the validation split (`n = 200`) for model
+The reported architecture comparison uses the validation split ($n=200$) for model
 selection and comparison. Its results are from one run and have no across-seed
 uncertainty estimate. Accuracy intervals below are 95% Wilson score intervals; they
 describe binomial sampling uncertainty for the validation sample, not variation from
@@ -279,7 +296,7 @@ used to select the comparison models.
 | SwinV2-Tiny | 79.5% (73.4–84.5%) | 0.782 | 0.777 | 0.790 | 93.5% | 0.129 |
 | DINOv2 ViT-S/14 | 38.0% (31.6–44.9%) | 0.305 | 0.344 | 0.342 | 69.0% | **0.103** |
 
-ECE is expected calibration error (lower is better, but it does not measure
+ECE is expected calibration error [10] (lower is better, but it does not measure
 classification quality by itself). ConvNeXtV2 is the best choice **among these three
 recorded validation runs**: it has the highest macro-F1, accuracy, balanced accuracy,
 weighted F1, and top-3 accuracy. Its margin over SwinV2 is small (one more correct
@@ -496,12 +513,17 @@ part of the tracked software archive.
 
 ## References and licenses
 
-- Liu, Z. et al. (2022). [A ConvNet for the 2020s](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html). *CVPR*.
-- Woo, S. et al. (2023). [ConvNeXt V2: Co-designing and Scaling ConvNets with Masked Autoencoders](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html). *CVPR*.
-- Liu, Z. et al. (2022). [Swin Transformer V2: Scaling Up Capacity and Resolution](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html). *CVPR*.
-- Oquab, M. et al. (2023). [DINOv2: Learning Robust Visual Features without Supervision](https://arxiv.org/abs/2304.07193). arXiv:2304.07193.
-- Wightman et al. [PyTorch Image Models (`timm`)](https://github.com/huggingface/pytorch-image-models).
-- Dataset provenance and export details: [`resources/README.md`](resources/README.md).
+1. Liu, Z. et al. (2022). [A ConvNet for the 2020s](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.html). *CVPR*.
+2. Woo, S. et al. (2023). [ConvNeXt V2: Co-designing and Scaling ConvNets with Masked Autoencoders](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html). *CVPR*.
+3. Liu, Z. et al. (2021). [Swin Transformer: Hierarchical Vision Transformer Using Shifted Windows](https://openaccess.thecvf.com/content/ICCV2021/html/Liu_Swin_Transformer_Hierarchical_Vision_Transformer_Using_Shifted_Windows_ICCV_2021_paper.html). *ICCV*.
+4. Liu, Z. et al. (2022). [Swin Transformer V2: Scaling Up Capacity and Resolution](https://openaccess.thecvf.com/content/CVPR2022/html/Liu_Swin_Transformer_V2_Scaling_Up_Capacity_and_Resolution_CVPR_2022_paper.html). *CVPR*.
+5. Dosovitskiy, A. et al. (2021). [An Image Is Worth 16×16 Words: Transformers for Image Recognition at Scale](https://openreview.net/forum?id=YicbFdNTTy). *ICLR*.
+6. Oquab, M. et al. (2023). [DINOv2: Learning Robust Visual Features without Supervision](https://arxiv.org/abs/2304.07193). arXiv:2304.07193.
+
+The mathematical methods note contains references **[7–20]** for optimization,
+statistical intervals, probability scoring, remote-sensing datasets, and implementation
+documentation. [Open the complete bibliography and derivations](docs/MATHEMATICAL_METHODS.md#references-and-further-reading).
+Dataset provenance and export details are in [`resources/README.md`](resources/README.md).
 
 Citation metadata is provided in [`CITATION.cff`](CITATION.cff). The software is
 licensed under the [MIT License](LICENSE). Dataset and pretrained-model licenses are

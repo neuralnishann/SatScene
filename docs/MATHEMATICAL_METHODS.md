@@ -3,18 +3,23 @@
 This note defines the mathematical objects used by the code and README. The
 formulations describe the implemented 14-class image classifier and its metrics;
 they do not imply that the archived single-run measurements are statistically
-stable. Model blocks are instantiated by `timm`, while this repository supplies
+stable. Model blocks are instantiated by `timm` [19], while this repository supplies
 the task head, data path, optimization loop, checkpointing, and evaluation.
+Equations use GitHub-supported LaTeX delimiters so they render as mathematical
+notation in the repository's Markdown view.
 
 ## 1. Task, observations, and target construction
 
-Let an RGB image be `x_i ∈ [0,255]^(H×W×3)`. The dataset contains `K = 14`
+Let an RGB image be $x_i \in [0,255]^{H\times W\times 3}$. The dataset contains $K=14$
 scene labels. YOLO files describe detected objects rather than image-level
-scenes. For annotation class IDs `a_i1, …, a_iJ`, SatScene constructs a target
+scenes. For annotation class IDs $a_{i1},\ldots,a_{iJ}$, define the class counts
+$n_{ic}=\sum_{j=1}^{J}\mathbf{1}[a_{ij}=c]$. SatScene constructs the target by
+finding the first annotation whose class has maximal frequency:
 
-```text
-y_i = first class ID attaining max_c count(a_ij = c),   y_i ∈ {0,…,K−1}.
-```
+$$
+j_i^*=\min\left\{j:n_{i,a_{ij}}=\max_{c}n_{ic}\right\},\qquad
+y_i=a_{i,j_i^*}\in\{0,\ldots,K-1\}.
+$$
 
 An image with a missing or empty annotation file is excluded. This deterministic
 mapping converts an object-label collection to one scene class, but it is a
@@ -22,12 +27,13 @@ proxy target: an image may contain multiple scene types or a dominant object
 that does not describe its overall land use. Label noise therefore enters the
 supervised objective before model error is considered.
 
-For resized channel `q ∈ {R,G,B}`, preprocessing is
+For resized channel $q\in\{R,G,B\}$, preprocessing is
 
-```text
-x'_q = (x_q / 255 − μ_q) / σ_q
-μ = (0.485, 0.456, 0.406),  σ = (0.229, 0.224, 0.225).
-```
+$$
+x'_{i,h,w,q}=\frac{x_{i,h,w,q}/255-\mu_q}{\sigma_q},\qquad
+\boldsymbol{\mu}=(0.485,0.456,0.406),\quad
+\boldsymbol{\sigma}=(0.229,0.224,0.225).
+$$
 
 These are ImageNet normalization constants. Training samples horizontal flip,
 vertical flip, and a multiple-of-90-degree rotation independently with
@@ -37,14 +43,19 @@ assumption that should be checked against the image source and task.
 
 ## 2. Shared classifier formulation
 
-For each candidate backbone `m`, the feature extractor is
-`h_i = f_(θ_m)(x'_i) ∈ R^d`. A task-specific affine head produces `K` logits:
+For each candidate backbone $m$, the feature extractor is
+$\mathbf{h}_i=f_{\theta_m}(\mathbf{x}'_i)\in\mathbb{R}^{d}$. A task-specific affine head produces $K$ logits:
 
-```text
-z_i = W_m h_i + b_m,   W_m ∈ R^(K×d), b_m ∈ R^K.
-p_ic = softmax(z_i)_c = exp(z_ic) / Σ_(j=1)^K exp(z_ij).
-ŷ_i = argmax_c p_ic.
-```
+$$
+\mathbf{z}_i=\mathbf{W}_m\mathbf{h}_i+\mathbf{b}_m,\qquad
+\mathbf{W}_m\in\mathbb{R}^{K\times d},\quad \mathbf{b}_m\in\mathbb{R}^{K}.
+$$
+
+$$
+p_{ic}=\operatorname{softmax}(\mathbf{z}_i)_c=
+\frac{\exp(z_{ic})}{\sum_{j=0}^{K-1}\exp(z_{ij})},\qquad
+\hat{y}_i=\arg\max_{c\in\{0,\ldots,K-1\}}p_{ic}.
+$$
 
 The chosen `timm` classifier implementation may include architecture-specific
 pooling and normalization before the final affine layer. The new output dimension
@@ -54,7 +65,7 @@ not necessarily calibrated estimates of correctness.
 
 ### 2.1 ConvNeXtV2-Tiny
 
-ConvNeXtV2 is a hierarchical convolutional feature extractor. For the recorded
+ConvNeXtV2 [1,2] is a hierarchical convolutional feature extractor. For the recorded
 224 × 224 input, the stem and successive reductions create feature maps at
 decreasing spatial resolutions; the Tiny stage depths are `(3, 3, 9, 3)`.
 Depthwise spatial convolutions extract local patterns, while pointwise channel
@@ -62,16 +73,20 @@ mixing and nonlinearities build more complex features. This gives the model a
 locality bias and progressively wider receptive fields, which can be useful for
 land-cover texture and spatial arrangement.
 
-The V2 block adds Global Response Normalization (GRN). For feature tensor
-`X ∈ R^(H×W×C)`, one channel-wise form is
+The V2 block adds Global Response Normalization (GRN) [2]. For feature tensor
+$\mathbf{X}\in\mathbb{R}^{H\times W\times C}$, one channel-wise form is
 
-```text
-G_c       = sqrt(Σ_h Σ_w X_(h,w,c)^2)
-n_c       = G_c / (mean_j G_j + ε)
-GRN(X)_c  = X_c + γ_c · (X_c · n_c) + β_c.
-```
+$$
+G_c=\sqrt{\sum_{h=1}^{H}\sum_{w=1}^{W}X_{h,w,c}^{2}},\qquad
+n_c=\frac{G_c}{\frac{1}{C}\sum_{j=1}^{C}G_j+\varepsilon},
+$$
 
-`γ` and `β` are learned channel parameters and `ε` stabilizes division. GRN
+$$
+\operatorname{GRN}(\mathbf{X})_{h,w,c}
+=X_{h,w,c}+\gamma_c\left(X_{h,w,c}n_c\right)+\beta_c.
+$$
+
+$\gamma_c$ and $\beta_c$ are learned channel parameters and $\varepsilon$ stabilizes division. GRN
 contrasts global channel responses; it is not a normalization of the input RGB
 image. ConvNeXtV2 was co-designed with fully convolutional masked autoencoding
 pretraining, while this experiment loads an ImageNet fine-tuned pretrained tag.
@@ -80,89 +95,99 @@ fine-tuning recipe, not masked pretraining performed by this project.
 
 ### 2.2 Swin Transformer V2-Tiny
 
-SwinV2 begins with patch embedding and applies self-attention in local windows.
+SwinV2 begins with patch embedding and applies self-attention in local windows [3,4].
 Alternating regular and shifted windows allow information to cross window
 boundaries; patch merging creates a hierarchy of coarser features. In a window
-with `M × M` tokens, attention among its tokens has an interaction term
-proportional to `M^4 d` (or `M^2` tokens squared times feature width `d`). If
-there are `N` total tokens, window attention is approximately
-`O(N M^2 d)`, compared with `O(N^2 d)` for global attention at that resolution.
+with $M\times M$ tokens, attention among its tokens has an interaction term
+proportional to $M^4d$. If there are $N$ total tokens, window attention is approximately
+$\mathcal{O}(NM^2d)$, compared with $\mathcal{O}(N^2d)$ for global attention at that resolution.
 The actual implementation also includes projections, MLPs, and multiple stages.
 
-SwinV2 uses scaled cosine attention. A simplified head-level expression is
+SwinV2 uses scaled cosine attention [4]. For query token $i$, key token $j$,
+and attention head $h$, a simplified score is
 
-```text
-A(Q,K) = τ · (Q / ||Q||) (K / ||K||)^T + B,
-Attention(Q,K,V) = softmax(A(Q,K)) V,
-```
+$$
+A_{ij}^{(h)}=\tau_h\left(\frac{\mathbf{q}_i^{(h)}}{\lVert\mathbf{q}_i^{(h)}\rVert_2}\right)^{\!\top}
+\left(\frac{\mathbf{k}_j^{(h)}}{\lVert\mathbf{k}_j^{(h)}\rVert_2}\right)
++B_{ij}^{(h)},\qquad
+\mathbf{o}_i^{(h)}=\sum_j\operatorname{softmax}_j(A_{ij}^{(h)})\mathbf{v}_j^{(h)}.
+$$
 
-where `τ` is a learned scale and `B` is a relative-position bias. This
+Here $\tau_h$ is a learned scale and $B_{ij}^{(h)}$ is a relative-position bias. This
 description omits masking and the architecture's normalization/residual details.
 The comparison uses the 256 × 256, window-8 pretrained configuration. Its
 hierarchical local context is a plausible fit for scenes containing structures
 at different spatial scales; whether it helps must be established empirically.
 
 For a hand-checkable attention-size comparison, the first Swin stage takes the
-256-pixel input to `64×64 = 4,096` patch tokens. An 8×8 window partition has
-`4,096/64 = 64` windows, each with `64² = 4,096` query-key score entries, or
-`64×4,096 = 262,144` entries per head for the stage. Global attention over the
-same 4,096 tokens would form `4,096² = 16,777,216` entries per head. This is a
+256-pixel input to $64\times64=4{,}096$ patch tokens. An $8\times8$ window partition has
+$4{,}096/64=64$ windows, each with $64^2=4{,}096$ query-key score entries, or
+$64\times4{,}096=262{,}144$ entries per head for the stage. Global attention over the
+same $4{,}096$ tokens would form $4{,}096^2=16{,}777{,}216$ entries per head. This is a
 64-fold reduction in pairwise score entries at that stage, not a 64-fold claim
 about whole-model latency or total FLOPs. For DINOv2's sequence of 257 tokens,
-global attention forms `257² = 66,049` entries per head per block.
+global attention forms $257^2=66{,}049$ entries per head per block.
 
 ### 2.3 DINOv2 ViT-S/14
 
-For a 224 × 224 image and patch size `P = 14`, the number of image patch tokens
-is `(224/14)^2 = 16^2 = 256`. Adding a class token gives a sequence length of
-`N = 257` (the run's model configuration does not use register tokens). A patch
-embedding maps each flattened `14 × 14 × 3` patch into a token vector. Positional
-information is added before Transformer blocks. For one self-attention head,
+For a $224\times224$ image and patch size $P=14$, the number of image patch tokens
+is $(224/14)^2=16^2=256$. Adding a class token gives a sequence length of
+$N=257$ (the run's model configuration does not use register tokens). A patch
+embedding maps each flattened $14\times14\times3$ patch into a token vector. Positional
+information is added before Transformer blocks [5,6]. For one self-attention head,
 
-```text
-Q = X W_Q,  K = X W_K,  V = X W_V
-Attention(X) = softmax(Q K^T / sqrt(d_k)) V.
-```
+$$
+Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V,\qquad
+\operatorname{Attn}(X)=\operatorname{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}\right)V.
+$$
 
 Global attention couples all `N` tokens, with pairwise interaction cost
-`O(N^2 d)` per block (more fully, attention products scale as `O(N^2 d)` and
-projections/MLPs add terms proportional to `N d^2`). The final class-token
+$\mathcal{O}(N^2d)$ per block (more fully, attention products scale as $\mathcal{O}(N^2d)$ and
+projections/MLPs add terms proportional to $Nd^2$). The final class-token
 representation feeds the 14-class head. The pretrained representation is from
 DINOv2 self-supervised training; SatScene fine-tunes it with scene labels and
 does not reproduce DINOv2's teacher/student, iBOT, or masked patch pretraining.
 
 ## 3. Objective, optimizer, and checkpoint selection
 
-For a batch of size `B`, the unweighted cross-entropy objective implemented in
-the model comparison is
+For a batch of size $B$, the unweighted cross-entropy objective implemented in
+the model comparison [18] is
 
-```text
-L_CE = −(1/B) Σ_(i=1)^B log p_(i,y_i)
-     =  (1/B) Σ_i [−z_(i,y_i) + log Σ_c exp(z_(i,c))].
-```
+$$
+\mathcal{L}_{\mathrm{CE}}
+=-\frac{1}{B}\sum_{i=1}^{B}\log p_{i,y_i}
+=\frac{1}{B}\sum_{i=1}^{B}\left[-z_{i,y_i}
++\log\!\left(\sum_{c=0}^{K-1}e^{z_{i,c}}\right)\right].
+$$
 
 The second expression is the numerically stable log-sum-exp form. The packaged
 trainer can optionally use inverse-frequency class weights
-`w_c = N_train / (K n_c)` and weighted mean loss
-`Σ_i w_(y_i) ℓ_i / Σ_i w_(y_i)`; that option is disabled in
+$w_c=N_{\mathrm{train}}/(K n_c)$ and weighted mean loss
+$\sum_i w_{y_i}\ell_i/\sum_i w_{y_i}$; that option is disabled in
 `configs/default.yaml` and is not used in the three-model comparison.
 
-The comparison uses AdamW (`η = 3×10^-4`, weight decay `λ = 10^-4`, batch size
-16, 10 epochs). For gradient `g_t`, first and second moments follow the Adam
-recurrences `m_t = β_1 m_(t−1) + (1−β_1)g_t` and
-`v_t = β_2 v_(t−1) + (1−β_2)g_t²`, with bias correction. AdamW applies decay
-separately from the loss-gradient update; schematically,
+The comparison uses AdamW [7] ($\eta=3\times10^{-4}$, weight decay $\lambda=10^{-4}$,
+batch size 16, 10 epochs). For gradient $g_t$, first and second moments follow
+$m_t=\beta_1m_{t-1}+(1-\beta_1)g_t$ and
+$v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2$. Bias-corrected moments are
+$\hat{m}_t=m_t/(1-\beta_1^t)$ and $\hat{v}_t=v_t/(1-\beta_2^t)$. AdamW applies
+decoupled decay separately from the loss-gradient update:
 
-```text
-θ_(t+1) = θ_t − η_t · AdamDirection(g_t, m_t, v_t) − η_t λ θ_t.
-```
+$$
+\theta_{t+1}=\theta_t-\eta_t\left(
+\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\varepsilon}+\lambda\theta_t\right).
+$$
 
-The learning rate is cosine-annealed by epoch, with `T_max = 10` and default
-`η_min = 0`:
+The comparison code overrides only learning rate and weight decay; PyTorch's
+AdamW defaults are $\beta_1=0.9$, $\beta_2=0.999$, and $\varepsilon=10^{-8}$.
 
-```text
-η_t = 0.5 η_max [1 + cos(π t / T_max)].
-```
+The learning rate is cosine-annealed by epoch [8], with $T_{\max}=10$ and default
+$\eta_{\min}=0$:
+
+$$
+\eta_t=\eta_{\min}+\frac{1}{2}(\eta_{\max}-\eta_{\min})
+\left[1+\cos\!\left(\frac{\pi t}{T_{\max}}\right)\right].
+$$
 
 At each epoch, validation macro-F1 is computed and the highest-scoring epoch is
 saved. This makes validation part of model selection; the best validation score
@@ -177,26 +202,34 @@ packaged checkpoint or describe the packaged run as the validation winner.
 
 ## 4. Evaluation metrics in this repository
 
-Let `C_ab` be the number of samples with true class `a` and predicted class
-`b`. For class `c`,
+Let $C_{ab}$ be the number of samples with true class $a$ and predicted class
+$b$. For class $c$,
 
-```text
-TP_c = C_cc,  FN_c = Σ_(b≠c) C_cb,  FP_c = Σ_(a≠c) C_ac
-Precision_c = TP_c / (TP_c + FP_c)
-Recall_c    = TP_c / (TP_c + FN_c)
-F1_c        = 2 Precision_c Recall_c / (Precision_c + Recall_c).
-```
+$$
+\begin{aligned}
+\mathrm{TP}_c&=C_{cc}, &
+\mathrm{FN}_c&=\sum_{b\ne c}C_{cb}, &
+\mathrm{FP}_c&=\sum_{a\ne c}C_{ac},\\
+\mathrm{Precision}_c&=\frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FP}_c}, &
+\mathrm{Recall}_c&=\frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FN}_c}, &
+\mathrm{F1}_c&=\frac{2\,\mathrm{Precision}_c\,\mathrm{Recall}_c}
+{\mathrm{Precision}_c+\mathrm{Recall}_c}.
+\end{aligned}
+$$
 
 Undefined zero-denominator class scores are set to zero by the implementation.
 The reported aggregate scores are
 
-```text
-Accuracy          = (Σ_c C_cc) / N
-Macro-F1          = (1/K) Σ_c F1_c
-Balanced accuracy = (1/K) Σ_c Recall_c
-Weighted-F1       = Σ_c (n_c/N) F1_c
-Top-k accuracy    = (1/N) Σ_i 1[y_i ∈ indices of k largest p_i].
-```
+$$
+\begin{aligned}
+\mathrm{Accuracy}&=\frac{\sum_{c=0}^{K-1}C_{cc}}{N}, &
+\mathrm{MacroF1}&=\frac{1}{K}\sum_{c=0}^{K-1}\mathrm{F1}_c,\\
+\mathrm{BalancedAcc}&=\frac{1}{K}\sum_{c=0}^{K-1}\mathrm{Recall}_c, &
+\mathrm{WeightedF1}&=\sum_{c=0}^{K-1}\frac{n_c}{N}\mathrm{F1}_c,\\
+\mathrm{TopKAcc}&=\frac{1}{N}\sum_{i=1}^{N}
+\mathbf{1}\!\left[y_i\in\operatorname{TopK}(\mathbf{p}_i)\right].
+\end{aligned}
+$$
 
 In single-label multiclass classification, macro recall equals balanced
 accuracy, but macro-F1 and weighted-F1 differ because their averaging weights
@@ -204,22 +237,29 @@ differ. Top-3 accuracy describes shortlist coverage, not top-1 correctness.
 
 ### 4.1 Cross-entropy and probability scores
 
-Evaluation cross-entropy is the mean `−log(p_(i,y_i))`; it penalizes confident
-errors more heavily than accuracy. The multiclass Brier score in
+Evaluation cross-entropy is the mean $-\log(p_{i,y_i})$; it penalizes confident
+errors more heavily than accuracy. The multiclass Brier score [9] in
 `src/satscene/metrics.py` is
 
-```text
-Brier = (1/N) Σ_i Σ_(c=1)^K (p_ic − 1[y_i=c])².
-```
+$$
+\mathrm{Brier}=\frac{1}{N}\sum_{i=1}^{N}\sum_{c=0}^{K-1}
+\left(p_{ic}-\mathbf{1}[y_i=c]\right)^2.
+$$
 
 For this sum-over-classes convention, the score lies between 0 and 2, with
 lower values better. Top-label expected calibration error (ECE) uses `M = 10`
-equal-width confidence bins. With `q_i = max_c p_ic`, `a_i = 1[ŷ_i=y_i]`, and
-`B_m` the examples whose `q_i` fall in bin `m`,
+equal-width confidence bins, following the standard binned approximation [10]. With $q_i=\max_c p_{ic}$,
+$a_i=\mathbf{1}[\hat{y}_i=y_i]$, and $B_m$ the examples whose $q_i$ fall in bin $m$,
 
-```text
-ECE = Σ_(m=1)^M (|B_m|/N) · | mean_(i∈B_m)(a_i) − mean_(i∈B_m)(q_i) |.
-```
+$$
+\mathrm{ECE}=\sum_{m=1}^{M}\frac{|B_m|}{N}
+\left|\operatorname{acc}(B_m)-\operatorname{conf}(B_m)\right|,
+$$
+
+$$
+\operatorname{acc}(B_m)=\frac{1}{|B_m|}\sum_{i\in B_m}a_i,\qquad
+\operatorname{conf}(B_m)=\frac{1}{|B_m|}\sum_{i\in B_m}q_i.
+$$
 
 ECE is bin-dependent and can hide within-bin errors; it should be read together
 with a reliability diagram and a proper score such as cross-entropy or Brier.
@@ -227,19 +267,23 @@ The model comparison's ECE values are descriptive estimates on only 200 examples
 
 ### 4.2 Wilson interval for accuracy
 
-For `k` correct predictions among `n` examples, `p̂ = k/n`. The two-sided
-Wilson score interval uses normal quantile `z` and is
+For $k$ correct predictions among $n$ examples, $\hat{p}=k/n$. The two-sided
+Wilson score interval [11,12] uses normal quantile $z$ and is
 
-```text
-d = 1 + z²/n
-centre = (p̂ + z²/(2n)) / d
-half   = z sqrt[p̂(1−p̂)/n + z²/(4n²)] / d
-CI     = [centre − half, centre + half].
-```
+$$
+d=1+\frac{z^2}{n},\qquad
+\mathrm{centre}=\frac{\hat{p}+z^2/(2n)}{d},\qquad
+\mathrm{half}=\frac{z\sqrt{\hat{p}(1-\hat{p})/n+z^2/(4n^2)}}{d},
+$$
 
-For ConvNeXtV2-Tiny, `k=160`, `n=200`, `p̂=0.800`, and `z=1.96`, giving
-approximately `[0.7391, 0.8495]`. For SwinV2-Tiny, `k=159`, `p̂=0.795`,
-giving `[0.7337, 0.8451]`. These are per-model binomial intervals. Because the
+$$
+\mathrm{CI}_{1-\alpha}=[\mathrm{centre}-\mathrm{half},\;
+\mathrm{centre}+\mathrm{half}].
+$$
+
+For ConvNeXtV2-Tiny, $k=160$, $n=200$, $\hat{p}=0.800$, and $z=1.96$, giving
+approximately $[0.7391,0.8495]$. For SwinV2-Tiny, $k=159$, $\hat{p}=0.795$,
+giving $[0.7337,0.8451]$. These are per-model binomial intervals. Because the
 same validation images were used for both models, comparing them formally calls
 for a paired analysis (for example, paired bootstrap over examples or McNemar's
 test on discordant predictions), not subtraction of independent intervals.
@@ -247,7 +291,7 @@ Neither method addresses retraining variability, dataset shift, or label noise.
 
 ## 5. Numerical reading of the archived comparison
 
-The comparison CSV gives the following validation values (`N=200`):
+The comparison CSV gives the following validation values ($N=200$):
 
 | Model | Correct / 200 | Accuracy | Macro-F1 | Balanced accuracy | Top-3 | ECE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -256,8 +300,8 @@ The comparison CSV gives the following validation values (`N=200`):
 | DINOv2 ViT-S/14 | 76 | 0.380 | 0.3049 | 0.3441 | 0.690 | 0.1027 |
 
 The direct accuracy difference for ConvNeXtV2 vs SwinV2 is
-`(160−159)/200 = 0.005`, i.e. one image or 0.5 percentage points. The macro-F1
-difference is about `0.7881−0.7817 = 0.0063`. These small single-run gaps are
+$(160-159)/200=0.005$, i.e. one image or 0.5 percentage points. The macro-F1
+difference is about $0.7881-0.7817=0.0063$. These small single-run gaps are
 not strong evidence of a stable ranking. DINOv2 has lower recorded ECE than the
 other two, but its accuracy and macro-F1 are much lower; calibration alone does
 not measure classification quality. None of these rows is a held-out test
@@ -266,15 +310,15 @@ comparison, and no across-seed standard deviation is available.
 ## 6. Shape and interaction summary
 
 Spatial sizes below follow the selected input sizes and canonical model
-configuration. `H×W` counts spatial positions (or tokens), not channels. Channel
+configuration. $H\times W$ counts spatial positions (or tokens), not channels. Channel
 width changes by stage and is omitted here because only spatial interaction
 counts are being compared.
 
 | Backbone | Input and tokenization | Hierarchy / depth | Attention interaction pattern |
 | --- | --- | --- | --- |
-| ConvNeXtV2-Tiny | 224×224 RGB; 4×4 stem gives 56×56 features | 56² → 28² → 14² → 7²; depths 3/3/9/3 | Convolutional neighborhoods; not self-attention |
-| SwinV2-Tiny | 256×256 RGB; 4×4 patch embedding gives 64×64 tokens | 64² → 32² → 16² → 8²; depths 2/2/6/2 | Windowed attention, shifted between blocks; window size 8 |
-| DINOv2 ViT-S/14 | 224×224 RGB; 14×14 patches give 16×16 + CLS = 257 tokens | 12 transformer blocks, fixed token grid | Global all-pairs attention in each block |
+| ConvNeXtV2-Tiny | $224\times224$ RGB; $4\times4$ stem gives $56\times56$ features | $56^2\to28^2\to14^2\to7^2$; depths 3/3/9/3 | Convolutional neighborhoods; not self-attention |
+| SwinV2-Tiny | $256\times256$ RGB; $4\times4$ patch embedding gives $64\times64$ tokens | $64^2\to32^2\to16^2\to8^2$; depths 2/2/6/2 | Windowed attention, shifted between blocks; window size 8 |
+| DINOv2 ViT-S/14 | $224\times224$ RGB; $14\times14$ patches give $16\times16+\mathrm{CLS}=257$ tokens | 12 transformer blocks, fixed token grid | Global all-pairs attention in each block |
 
 The architectures have different channel dimensions, operator counts, and
 input sizes, so token-score counts alone cannot rank runtime or memory. For
@@ -313,10 +357,12 @@ hardware and batch size.
 19. [PyTorch Image Models (`timm`) model API](https://huggingface.co/docs/timm/reference/models).
 20. [Remote Sensing Satellite Images dataset](https://www.kaggle.com/datasets/umeradnaan/remote-sensing-satellite-images) and [Roboflow YOLOv8 export](https://universe.roboflow.com/image-captioning-for-remote-sensingdata-0zids/remote-sensing-data/dataset/2).
 
-The benchmark datasets above have different sensors, label definitions, and
-evaluation protocols. They are useful context or alternative experiments, not
-directly comparable to this project's 14-class validation scores without a
-reproducible protocol and label mapping.
+Remote-sensing scene-classification surveys describe the limited-label regime
+as a recurring methodological challenge [13]. AID, NWPU-RESISC45, EuroSAT, and
+BigEarthNet are useful alternative benchmarks [14–17], but their sensors,
+labels, and split designs differ from this assignment dataset. They are not
+directly comparable to SatScene's validation scores without a reproducible
+protocol and label mapping.
 
 This bibliography supports the mathematical background. Dataset licenses,
 pretrained-weight licenses, and exact model-card/pretraining provenance should be
