@@ -15,9 +15,6 @@
 [<img alt="RGB image classification" src="https://img.shields.io/badge/input-RGB%20images-orange">](#1-project-scope)
 [<img alt="Pytest test suite" src="https://img.shields.io/badge/tests-pytest%20suite-success">](#85-run-the-applications-and-tests)
 [<img alt="Citation metadata" src="https://img.shields.io/badge/citation-CFF-informational">](CITATION.cff)
-
-<br><br>
-
 [<img alt="Quick start" src="https://img.shields.io/badge/quick%20start-install%20%26%20run-007ec6">](#85-run-the-applications-and-tests)
 [<img alt="Experimental results" src="https://img.shields.io/badge/results-model%20comparison-6f42c1">](#5-results)
 [<img alt="Algorithms and methods" src="https://img.shields.io/badge/methods-algorithms%20%26%20math-0052cc">](#34-algorithm-pseudocode-and-implementation-correspondence)
