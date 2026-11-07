@@ -1,6 +1,6 @@
-# SatScene: Satellite Scene Classification with Pretrained Vision Models
-
 <div align="center">
+
+<h1>SatScene: Satellite Scene Classification with Pretrained Vision Models</h1>
 
 **S M Gazzali Arafat Nishan**<br>
 *Faculty of Computer Science, HSE University, Moscow, Russia*
@@ -11,7 +11,19 @@
 [<img alt="MIT license" src="https://img.shields.io/badge/license-MIT-brightgreen">](LICENSE)
 [<img alt="Python 3.10 or later" src="https://img.shields.io/badge/python-%3E%3D3.10-yellow">](pyproject.toml)
 [<img alt="1,000 images and 14 classes" src="https://img.shields.io/badge/dataset-1%2C000%20images%20%7C%2014%20classes-purple">](#2-dataset-and-label-construction)
+[<img alt="Three pretrained model backbones" src="https://img.shields.io/badge/models-3%20backbones-blueviolet">](#32-model-comparison)
+[<img alt="RGB image classification" src="https://img.shields.io/badge/input-RGB%20images-orange">](#1-project-scope)
+[<img alt="Pytest test suite" src="https://img.shields.io/badge/tests-pytest%20suite-success">](#85-run-the-applications-and-tests)
 [<img alt="Citation metadata" src="https://img.shields.io/badge/citation-CFF-informational">](CITATION.cff)
+
+<br><br>
+
+[<img alt="Quick start" src="https://img.shields.io/badge/quick%20start-install%20%26%20run-007ec6">](#85-run-the-applications-and-tests)
+[<img alt="Experimental results" src="https://img.shields.io/badge/results-model%20comparison-6f42c1">](#5-results)
+[<img alt="Algorithms and methods" src="https://img.shields.io/badge/methods-algorithms%20%26%20math-0052cc">](#34-algorithm-pseudocode-and-implementation-correspondence)
+[<img alt="Project documentation" src="https://img.shields.io/badge/docs-guides%20%26%20setup-008672">](docs/)
+[<img alt="Dataset source and provenance" src="https://img.shields.io/badge/data-source%20%26%20provenance-8a2be2">](resources/README.md)
+[<img alt="Archived model runs" src="https://img.shields.io/badge/runs-metrics%20%26%20diagnostics-brown">](runs/README.md)
 
 </div>
 
@@ -21,9 +33,12 @@
 | --- | --- |
 | Project type | Research software prototype |
 | Package | `satscene` 0.1.0 |
-| Dependencies | [`pyproject.toml`](pyproject.toml), [`requirements.txt`](requirements.txt); lower bounds, no lockfile |
-| Dataset | Remote Sensing Satellite Images; 1,000 RGB images, 14 classes |
-| Data splits | 700 train / 200 validation / 100 test |
+| Models | ConvNeXtV2-Tiny, SwinV2-Tiny, DINOv2 ViT-S/14 |
+| Task | Single-label classification of overhead RGB images |
+| Dataset | Remote Sensing Satellite Images; 1,000 images, 14 classes |
+| Splits | 700 train / 200 validation / 100 test |
+| Python | `>=3.10`; dependency ranges in [`pyproject.toml`](pyproject.toml), no lockfile |
+| License | [MIT](LICENSE) for software; dataset terms are separate |
 
 ## Abstract
 
