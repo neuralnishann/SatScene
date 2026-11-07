@@ -27,19 +27,6 @@
 
 </div>
 
----
-
-| Project metadata | Details |
-| --- | --- |
-| Project type | Research software prototype |
-| Package | `satscene` 0.1.0 |
-| Models | ConvNeXtV2-Tiny, SwinV2-Tiny, DINOv2 ViT-S/14 |
-| Task | Single-label classification of overhead RGB images |
-| Dataset | Remote Sensing Satellite Images; 1,000 images, 14 classes |
-| Splits | 700 train / 200 validation / 100 test |
-| Python | `>=3.10`; dependency ranges in [`pyproject.toml`](pyproject.toml), no lockfile |
-| License | [MIT](LICENSE) for software; dataset terms are separate |
-
 ## Abstract
 
 SatScene is research software for image-level scene classification in overhead RGB
