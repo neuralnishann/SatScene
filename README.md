@@ -5,21 +5,27 @@
 **S M Gazzali Arafat Nishan**<br>
 *Faculty of Computer Science, HSE University, Moscow, Russia*
 
+<br>
+
+[<img alt="Package version 0.1.0" src="https://img.shields.io/badge/version-0.1.0-blue">](pyproject.toml)
+[<img alt="MIT license" src="https://img.shields.io/badge/license-MIT-brightgreen">](LICENSE)
+[<img alt="Python 3.10 or later" src="https://img.shields.io/badge/python-%3E%3D3.10-yellow">](pyproject.toml)
+[<img alt="1,000 images and 14 classes" src="https://img.shields.io/badge/dataset-1%2C000%20images%20%7C%2014%20classes-purple">](#2-dataset-and-label-construction)
+[<img alt="Research paper PDF" src="https://img.shields.io/badge/paper-PDF-red">](paper/main.pdf)
+[<img alt="Citation metadata" src="https://img.shields.io/badge/citation-CFF-informational">](CITATION.cff)
+
 </div>
 
 ---
 
 | Project metadata | Details |
 | --- | --- |
-| Project type | Research software prototype and course project |
-| Software package | `satscene` **0.1.0** |
-| License | [MIT](LICENSE) (software only) |
-| Python | `>=3.10` (Python 3.11 recommended) |
-| Dependencies | [`pyproject.toml`](pyproject.toml) and [`requirements.txt`](requirements.txt); lower bounds, no lockfile |
+| Project type | Research software prototype |
+| Package | `satscene` 0.1.0 |
+| Dependencies | [`pyproject.toml`](pyproject.toml), [`requirements.txt`](requirements.txt); lower bounds, no lockfile |
 | Dataset | Remote Sensing Satellite Images; 1,000 RGB images, 14 classes |
 | Data splits | 700 train / 200 validation / 100 test |
-| Research paper | [PDF](paper/main.pdf) · [LaTeX source](paper/main.tex) |
-| Citation metadata | [CITATION.cff](CITATION.cff) |
+| Paper source | [LaTeX](paper/main.tex) |
 
 ## Abstract
 
@@ -31,7 +37,8 @@ on a 1,000-image, 14-class dataset. ConvNeXtV2-Tiny achieves 80.0% validation ac
 and 0.788 macro-F1 in its recorded run. Each backbone was trained once with one seed;
 these results do not establish a stable ranking or geographic generalization. The
 repository provides the code, configurations, metrics, and documentation needed to
-inspect and reproduce the project-scale workflow.
+inspect the project-scale workflow. Exact reproduction additionally requires the
+matching dataset, checkpoints, and software environment, which are not fully archived.
 
 **Keywords —** remote sensing; satellite imagery; scene classification; transfer
 learning; ConvNeXt; Swin Transformer; DINOv2; decision support
@@ -264,7 +271,7 @@ $$
 
 Thus the notebook starts epoch 1 at $\eta_0$ and advances the scheduler after
 each epoch. The checkpoint rule is
-$t^\star=\arg\max_{t\in\{1,\ldots,10\}}\operatorname{F1}_{\rm macro}
+$t^\star=\arg\max_{t\in\{1,\ldots,10\}}\mathrm{F1}_{\rm macro}
 (\mathcal{D}_{\rm val};\theta_t)$; ties retain the earlier checkpoint because
 the implementation saves only on a strict improvement. This is model selection
 on validation data, not an unbiased estimate of generalization.
@@ -321,7 +328,7 @@ $$
 \textbf{1.}\quad
   &\mathcal{D}_s\gets\varnothing,\quad\mathcal{S}_s\gets\varnothing.\\
 \textbf{2.}\quad
-  &\textbf{for }x_i\in\operatorname{sort}_{\rm lex}(\mathcal{X}_s)\textbf{ do}\\
+  &\textbf{for }x_i\in\mathrm{sort}_{\rm lex}(\mathcal{X}_s)\textbf{ do}\\
 \textbf{3.}\quad
   &\quad a_i\gets(a_{i1},\ldots,a_{iJ_i})
     \quad\text{from the matching label file}.\\
@@ -386,13 +393,13 @@ $$
   &\qquad\text{Resize to }224,\ 256,\text{ or }224
     \text{ pixels for ConvNeXtV2, SwinV2, or DINOv2; ImageNet-normalize}.\\
 \textbf{9.}\quad
-  &\qquad p_{ic}\gets\operatorname{softmax}(f_\theta(\widetilde x_i))_c,
+  &\qquad p_{ic}\gets\mathrm{softmax}(f_\theta(\widetilde x_i))_c,
     \quad
     \mathcal{L}\gets-\frac{1}{|Y|}
       \sum_{i=1}^{|Y|}\log p_{i,y_i}.\\
 \textbf{10.}\quad
   &\qquad\theta\gets
-    \operatorname{AdamWStep}(\theta,\nabla_\theta\mathcal{L},
+    \mathrm{AdamWStep}(\theta,\nabla_\theta\mathcal{L},
       \eta_t,\lambda).\\
 \textbf{11.}\quad
   &\quad\textbf{end for}.\\
@@ -406,7 +413,7 @@ $$
 \textbf{13.}\quad
   &\quad\textbf{if }F_t>F^\star\textbf{ then }
     (F^\star,\theta^\star,t^\star)\gets
-      (F_t,\operatorname{copy}(\theta),t);
+      (F_t,\mathrm{copy}(\theta),t);
     \quad\text{save }\theta^\star.\\
 \textbf{14.}\quad
   &\quad\mathcal{H}\gets\mathcal{H}\cup
@@ -451,10 +458,10 @@ $$
 \textbf{1.}\quad
   &\textbf{for }(x_i,y_i)\in\mathcal{D}_{\rm te}\textbf{ do, without gradients}\\
 \textbf{2.}\quad
-  &\quad p_i\gets\operatorname{softmax}(f_{\theta^\star}(x_i)),\quad
+  &\quad p_i\gets\mathrm{softmax}(f_{\theta^\star}(x_i)),\quad
     \widehat y_i\gets\arg\max_c p_{ic}.\\
 \textbf{3.}\quad
-  &\quad T_i\gets\operatorname{Top3}(p_i),\quad
+  &\quad T_i\gets\mathrm{Top3}(p_i),\quad
     q_i\gets\max_c p_{ic},\quad
     r_i\gets\mathbb{1}[\widehat y_i=y_i].\\
 \textbf{4.}\quad
@@ -465,7 +472,7 @@ $$
     A\gets\frac{1}{N}\sum_{i=1}^{N}r_i.\\
 \textbf{6.}\quad
   &\text{Compute per-class precision, recall, F1, and support; macro-F1,
-    balanced accuracy, and }\operatorname{Acc}@3.\\
+    balanced accuracy, and }\mathrm{Acc}@3.\\
 \textbf{7.}\quad
   &\text{Compute NLL, multiclass Brier score, and ten-bin top-label ECE
     from }\{p_i,y_i\}_{i=1}^{N}.\\
@@ -484,14 +491,14 @@ The implemented probability metrics are
 
 $$
 \begin{aligned}
-\operatorname{NLL}
+\mathrm{NLL}
 &=-\frac1N\sum_{i=1}^N\log p_{i,y_i},\\
-\operatorname{Brier}
+\mathrm{Brier}
 &=\frac1N\sum_{i=1}^N\sum_{c=1}^{C}
 \left(p_{ic}-\mathbb{1}[y_i=c]\right)^2,\\
-\operatorname{ECE}
+\mathrm{ECE}
 &=\sum_{m=1}^{10}\frac{|B_m|}{N}
-\left|\operatorname{acc}(B_m)-\operatorname{conf}(B_m)\right|.
+\left|\mathrm{acc}(B_m)-\mathrm{conf}(B_m)\right|.
 \end{aligned}
 $$
 
@@ -517,13 +524,13 @@ $$
   &R=(\widehat c,q,\mathcal{T}_K,u,v,b).\\
 \textbf{1.}\quad
   &\widetilde x\gets
-    \operatorname{Normalize}(\operatorname{Resize}(\operatorname{RGB}(x)));
+    \mathrm{Normalize}(\mathrm{Resize}(\mathrm{RGB}(x)));
     \quad\text{use checkpoint input size and ImageNet statistics}.\\
 \textbf{2.}\quad
-  &p\gets\operatorname{softmax}(f_{\theta^\star}(\widetilde x)).\\
+  &p\gets\mathrm{softmax}(f_{\theta^\star}(\widetilde x)).\\
 \textbf{3.}\quad
   &(c_1,\ldots,c_K)\gets
-    \operatorname{argsort}_{c\in\mathcal{C}}(p_c)\text{ in descending order},
+    \mathrm{argsort}_{c\in\mathcal{C}}(p_c)\text{ in descending order},
     \quad K=\min(3,|\mathcal{C}|).\\
 \textbf{4.}\quad
   &\widehat c\gets c_1,\quad q\gets p_{\widehat c},\quad
