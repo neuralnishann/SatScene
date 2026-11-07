@@ -1,8 +1,26 @@
 """Model factory and checkpoint helpers."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import torch
 import timm
+
+
+def checkpoint_not_found_message(path: str) -> str:
+    """Explain the missing path and list checkpoints available in the local runs tree."""
+    available = sorted(Path("runs").glob("*/best_model.pth"))
+    lines = [f"Checkpoint not found: {path}"]
+    if available:
+        lines.append("Available checkpoints:")
+        lines.extend(f"  - {candidate}" for candidate in available)
+        lines.append("Pass one of these paths with --checkpoint.")
+    else:
+        lines.append(
+            "No trained checkpoints were found under runs/. Train a model first, "
+            "or restore its best_model.pth file."
+        )
+    return "\n".join(lines)
 
 
 def build_model(num_classes: int, name: str = "convnext_tiny.fb_in22k_ft_in1k", pretrained: bool = True,

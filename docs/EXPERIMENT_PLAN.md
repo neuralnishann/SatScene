@@ -17,6 +17,31 @@ The current dataset has only 1,000 images, class labels are inferred from detect
 annotations, and the JPEGs are not georeferenced. This supports a small remote-sensing
 scene-classification project; it does not support claims of operational GIS analysis.
 
+## Archived results at submission
+
+The final saved comparison contains one run per model. All three runs use seed 42,
+10 epochs, batch size 16, and validation macro-F1 checkpoint selection. Their validation
+metrics are summarized below; detailed class reports, calibration data, predictions,
+histories, and plots are in `runs/`.
+
+| Model | Best epoch | Correct | Accuracy (95% Wilson CI) | Macro-F1 | Balanced accuracy | Top-3 |
+|---|---:|---:|---:|---:|---:|---:|
+| ConvNeXtV2-Tiny | 9 | 160/200 | 80.0% (73.9–85.0%) | 0.7881 | 0.7876 | 94.0% |
+| SwinV2-Tiny | 10 | 159/200 | 79.5% (73.4–84.5%) | 0.7817 | 0.7770 | 93.5% |
+| DINOv2 ViT-S/14 | 10 | 76/200 | 38.0% (31.6–44.9%) | 0.3049 | 0.3441 | 69.0% |
+
+These are validation results from a single seed per model, not a stable ranking or
+held-out performance estimate. The best ConvNeXtV2-Tiny result exceeds SwinV2-Tiny by
+one validation image; this small difference does not establish a dependable advantage.
+
+A separate historical test artifact in `iodata/sample_output/metrics_test.json` records
+86/100 correct (86.0% accuracy), macro-F1 0.7829, balanced accuracy 0.7772, and
+top-3 accuracy 95.0%. The included files do not identify the model or checkpoint, so
+these metrics cannot be attributed to any of the three comparison checkpoints. Because
+this test example is already available and inspected, it cannot serve as a blind final
+assessment. Comparison checkpoints are available in the local
+`runs/<model>/best_model.pth` folders but are ignored by Git because of their size.
+
 ## Recommended project sequence
 
 ### Gate 1 — Lock down the data
@@ -33,17 +58,20 @@ mapping or split counts cannot be reconciled.
 
 ### Gate 2 — Establish honest baselines
 
-Run all model selection on train/validation only, with the test split untouched until the
-final recipe is fixed:
+Model selection for a clean experiment must use train/validation only and leave test
+untouched until the recipe is fixed. In this repository, the three archived comparison
+runs followed that rule; a separate packaged-workflow test result has since been exposed,
+so this supplied test split is no longer blind for final evaluation:
 
 1. Majority-class predictor (sanity baseline).
 2. Frozen pretrained ConvNeXt backbone with a trained classification head.
 3. Fine-tuned ConvNeXt-Tiny using the packaged training script.
 4. Optional smaller deployment baseline, such as MobileNetV3, if time allows.
 
-Use the same split, preprocessing, and evaluation code for each. Choose checkpoints by
-validation macro-F1 (the current default) because the classes are imbalanced. Record
-hardware, software versions, seed, config, duration, and checkpoint identifier.
+Use the same split, preprocessing, and evaluation code for each. The saved comparison
+selects checkpoints by validation macro-F1; the packaged trainer defaults to the same
+metric. Record hardware, software versions, seed, config, duration, and checkpoint
+identifier.
 
 ### Gate 3 — Diagnose generalization
 
@@ -69,21 +97,23 @@ selection with macro-F1 and balanced accuracy still recorded. Its output is isol
 
 ### Gate 4 — Final held-out test and deployment evidence
 
-After choosing the method and settings, evaluate the test split once. Report the sample
-count and uncertainty; do not use test outcomes to tune the recipe. For a stronger
+The packaged-workflow test example has already been evaluated and exposed in this
+repository, so do not treat the supplied test split as a blind final assessment or tune on
+that result. A future final evaluation requires a fresh, untouched test set. Report the
+sample count and uncertainty for any such evaluation. For a stronger
 industry-style demo, record median and 95th-percentile inference latency on the target Mac,
 the selected backend (MPS or CPU), model size, and behavior when confidence is low. These
 are deployment measurements, not model-quality substitutes. If you add an abstain/review
 threshold, select it on validation data and report both coverage and error among accepted
 predictions; do not tune that threshold on test data.
 
-The current evaluator writes `metrics_test.json`, `predictions_test.csv`, and a combined
+The evaluator writes `metrics_test.json`, `predictions_test.csv`, and a combined
 figure with count and normalized confusion matrices, per-class F1, and a reliability
 diagram. Training writes per-epoch validation loss, accuracy, macro-F1, balanced accuracy,
 and learning rate. Generate its plot with:
 
 ```bash
-python scripts/plot_training_history.py runs/convnext_tiny/history.json
+python scripts/plot_training_history.py runs/convnextv2_tiny/history.json
 ```
 
 ## Metrics to show
@@ -120,6 +150,9 @@ approximately 73.9–85.0%; this interval does not capture variation from retrai
    low-confidence behavior; state that GIS analyses are not executed.
 7. **Conclusion (30 s):** one defensible claim, remaining risks, and next production step.
 
-Replace every placeholder with outputs from the verified packaged run. If the test run or
-error/duplicate audit is not complete, label that item as not completed instead of implying
-it was done.
+Use the archived comparison values above when describing validation performance. Do not
+attribute the historical test artifact to the comparison models without model/checkpoint
+provenance. The near-duplicate audit and a held-out evaluation of the selected comparison
+checkpoint are not included in this repository snapshot; describe them as incomplete.
+The supplied test example has already been inspected, so only a fresh test set could provide blind final
+evidence.

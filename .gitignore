@@ -1,4 +1,9 @@
 /paper/
+!/paper/
+/paper/*
+!/paper/main.tex
+!/paper/references.bib
+!/paper/figures/
 .venv/
 __pycache__/
 *.py[cod]

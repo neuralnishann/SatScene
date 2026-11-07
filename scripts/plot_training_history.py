@@ -1,6 +1,6 @@
 """Plot train/validation curves from a packaged training run.
 
-Usage: python scripts/plot_training_history.py runs/convnext_tiny/history.json
+Usage: python scripts/plot_training_history.py [runs/convnextv2_tiny/history.json]
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("history", nargs="?", default="runs/convnext_tiny/history.json")
+    parser.add_argument("history", nargs="?", default="runs/convnextv2_tiny/history.json")
     parser.add_argument("--output", default=None)
     args = parser.parse_args()
 

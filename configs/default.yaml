@@ -1,9 +1,15 @@
 # Hyper-parameters copied from the original notebook (GIS_project.ipynb).
-seed: 42            # NOTE: the original logged run was not seeded
+seed: 42            # reproducible seed for new packaged-pipeline runs
 data:
   root: data/Remote Sensing Data.v2i.yolov8
   img_size: 224
   val_split: valid
+  augmentation:
+    horizontal_flip_p: 0.5
+    vertical_flip_p: 0.5
+    rotate90_p: 0.5
+    color_jitter_p: 0.0
+    blur_p: 0.0
 model:
   name: convnext_tiny.fb_in22k_ft_in1k
   pretrained: true
@@ -12,6 +18,9 @@ train:
   batch_size: 32
   num_workers: 2
   class_weighted_loss: false   # set true to counter the 118:17 City:River imbalance
+  balanced_sampling: false     # do not combine with class_weighted_loss without an ablation
+  loss: cross_entropy          # alternatives: cross_entropy, focal
+  focal_gamma: 2.0
   selection_metric: val_macro_f1  # better reflects minority-class performance than accuracy
 optim:
   lr: 3.0e-4

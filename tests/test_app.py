@@ -1,4 +1,4 @@
-from satscene.app import _analyze_image, _clear_results, create_interface
+from satscene.app import _analyze_image, _analyze_models, _clear_results, create_interface
 
 
 class FakeAgent:
@@ -55,15 +55,54 @@ def test_analyze_image_surfaces_expected_errors():
 
 
 def test_clear_results_resets_image_and_all_outputs():
-    image, status, predictions, follow_up = _clear_results()
+    image, status, predictions, follow_up, analyze_button = _clear_results()
 
     assert image is None
     assert "Ready to analyze" in status
     assert predictions is None
     assert follow_up == ""
+    assert analyze_button["interactive"] is False
+
+
+def test_analyze_models_returns_each_models_ranked_predictions():
+    result = {
+        "top_k": [("Forest", 0.8), ("Grassland", 0.2)],
+    }
+    agents = [
+        ("Model A", FakeAgent(result)),
+        ("Model B", FakeAgent(result)),
+        ("Model C", FakeAgent(result)),
+    ]
+
+    status, *predictions = _analyze_models(agents, "scene.jpg")
+
+    assert "All 3 models" in status
+    assert predictions == [{"Forest": 0.8, "Grassland": 0.2}] * 3
+
+
+def test_analyze_models_surfaces_individual_failures_without_stopping():
+    result = {"top_k": [("Forest", 0.8)]}
+    agents = [
+        ("Model A", FakeAgent(result)),
+        ("Model B", FakeAgent(error=OSError("unreadable image"))),
+        ("Model C", FakeAgent(result)),
+    ]
+
+    status, *predictions = _analyze_models(agents, "scene.jpg")
+
+    assert "Model B: unreadable image" in status
+    assert predictions == [{"Forest": 0.8}, {}, {"Forest": 0.8}]
 
 
 def test_interface_builds_with_clear_all_button():
     interface = create_interface(FakeAgent())
+
+    assert interface.title == "SatScene · Satellite Scene Classifier"
+
+
+def test_interface_builds_with_three_model_comparison():
+    agents = [(f"Model {name}", FakeAgent()) for name in "ABC"]
+
+    interface = create_interface(agents[0][1], comparison_agents=agents)
 
     assert interface.title == "SatScene · Satellite Scene Classifier"

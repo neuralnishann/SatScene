@@ -1,18 +1,34 @@
-# Input and output data
+# Sample input and output
 
-This folder contains a small, traceable example of the software's input/output contract.
-The complete 1,000-image dataset remains under `data/` (excluded from Git due to size).
+This folder demonstrates SatScene's image and evaluation-output formats. The input
+image is from the supplied 100-image test split; its YOLO annotation assigns it the
+label Desert.
 
-- `sample_input/`: one held-out test image and its YOLO annotation.
-- `sample_output/`: the prediction row for that image, plus the aggregate held-out metrics
-  and confusion figure produced by the evaluation run.
+## Included files
 
-Recreate the outputs after training with:
+- `sample_input/`: one test image and its YOLO annotation.
+- `sample_output/prediction.csv`: the image's prediction row. It records Desert as
+  the predicted class, matching the true label, at 99.61% confidence.
+- `sample_output/metrics_test.json`: aggregate metrics for a 100-image test evaluation:
+  86.0% accuracy (86/100; 95% Wilson CI 77.9–91.5%), macro-F1 0.783, balanced
+  accuracy 0.777, and top-3 accuracy 95.0%.
+- `sample_output/confusion_test.png`: confusion matrices, per-class F1 scores, and a
+  reliability diagram for that evaluation.
+
+The evaluation files do not record the model or checkpoint identity. Do not attribute
+these test metrics to one of the three archived comparison checkpoints without
+independent provenance. The comparison results in [`../runs/README.md`](../runs/README.md)
+are validation-only. The supplied test split has already been evaluated and is no
+longer a blind final assessment.
+
+The complete image dataset is not included; it remains under `data/` when downloaded
+locally. To generate evaluation outputs for a checkpoint, run:
 
 ```bash
 python -m satscene.evaluate --config configs/default.yaml --split test \
-  --checkpoint runs/convnext_tiny/best_model.pth
+  --checkpoint /path/to/best_model.pth
 ```
 
-The included historical output is a failure case: the model predicts Agriculture for all
-100 test images (6% accuracy). Do not present it as a successful classifier result.
+Evaluation writes metrics, predictions, and diagnostic outputs to the configured
+run directory. This command does not reproduce the archived files unless the same
+checkpoint and evaluation setup are supplied.

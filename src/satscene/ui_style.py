@@ -1,0 +1,41 @@
+"""Shared labels and color tokens for the browser and native macOS interfaces."""
+
+UI_COLORS = {
+    "page": "#f4f7fb",
+    "hero": "#10243e",
+    "hero_mid": "#173d61",
+    "hero_end": "#12677a",
+    "hero_text": "#f8fbff",
+    "hero_muted": "#d5e3ef",
+    "kicker": "#a9dce4",
+    "surface": "#ffffff",
+    "border": "#e2eaf2",
+    "text": "#17324e",
+    "muted": "#61758a",
+    "subtle": "#71849a",
+    "section": "#58748f",
+    "status_bg": "#f7fafc",
+    "status_border": "#dce8f1",
+    "result_bg": "#f1f8fb",
+    "result_border": "#d9eaf1",
+    "accent": "#0f7180",
+    "warning": "#b35717",
+}
+
+UI_COPY = {
+    "kicker": "GEOSPATIAL INTELLIGENCE · SCENE CLASSIFICATION",
+    "title": "SatScene",
+    "intro": "Turn satellite imagery into a clear scene prediction, confidence-ranked alternatives, and a practical geospatial follow-up.",
+    "add_image": "01 · ADD IMAGERY",
+    "image_label": "Satellite or aerial image",
+    "image_helper": "Upload a clear overhead image. Your original image is not modified.",
+    "scene_report": "02 · SCENE REPORT",
+    "ready": "Ready to analyze",
+    "ready_detail": "Upload an image, then select Analyze image.",
+    "analyze": "Analyze image",
+    "clear": "Clear all",
+    "predictions": "Confidence-ranked predictions",
+    "follow_up": "Suggested follow-up",
+    "follow_up_disclaimer": "This is a recommendation for an analyst; SatScene does not run the analysis.",
+    "follow_up_placeholder": "### Suggested follow-up\nYour analysis suggestion will appear here.",
+}

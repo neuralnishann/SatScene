@@ -35,6 +35,26 @@ def set_seed(seed: int) -> None:
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+    torch.use_deterministic_algorithms(True, warn_only=True)
+    if torch.backends.cudnn.is_available():
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+
+
+class FocalLoss(nn.Module):
+    """Multiclass focal loss; use only as a controlled imbalance experiment."""
+
+    def __init__(self, gamma: float = 2.0, weight=None, label_smoothing: float = 0.0):
+        super().__init__()
+        if gamma < 0:
+            raise ValueError("focal_gamma must be non-negative")
+        self.gamma, self.weight, self.label_smoothing = gamma, weight, label_smoothing
+
+    def forward(self, logits, targets):
+        ce = nn.functional.cross_entropy(
+            logits, targets, weight=self.weight, reduction="none", label_smoothing=self.label_smoothing
+        )
+        return ((1 - torch.exp(-ce)).pow(self.gamma) * ce).mean()
 
 
 @torch.no_grad()
@@ -111,8 +131,15 @@ def main() -> None:
     print("Train class distribution:", class_distribution(train_ix.labels, class_names))
 
     tc, oc = cfg["train"], cfg["optim"]
-    train_loader = make_loader(train_ix.paths, train_ix.labels, cfg["data"]["img_size"], tc["batch_size"], True, tc["num_workers"])
-    val_loader = make_loader(val_ix.paths, val_ix.labels, cfg["data"]["img_size"], tc["batch_size"], False, tc["num_workers"])
+    train_loader = make_loader(
+        train_ix.paths, train_ix.labels, cfg["data"]["img_size"], tc["batch_size"], True,
+        tc["num_workers"], augmentation=cfg["data"].get("augmentation"),
+        balanced_sampling=bool(tc.get("balanced_sampling", False)), seed=cfg["seed"],
+    )
+    val_loader = make_loader(
+        val_ix.paths, val_ix.labels, cfg["data"]["img_size"], tc["batch_size"], False,
+        tc["num_workers"], seed=cfg["seed"],
+    )
 
     model = build_model(len(class_names), cfg["model"]["name"], cfg["model"]["pretrained"],
                         img_size=cfg["data"]["img_size"]).to(device)
@@ -121,10 +148,14 @@ def main() -> None:
     weight = None
     if tc.get("class_weighted_loss", False):
         weight = torch.tensor(inverse_frequency_weights(train_ix.labels, len(class_names)), dtype=torch.float, device=device)
-    criterion = nn.CrossEntropyLoss(
-        weight=weight,
-        label_smoothing=float(tc.get("label_smoothing", 0.0)),
-    )
+    loss_name = tc.get("loss", "cross_entropy")
+    loss_kwargs = {"weight": weight, "label_smoothing": float(tc.get("label_smoothing", 0.0))}
+    if loss_name == "cross_entropy":
+        criterion = nn.CrossEntropyLoss(**loss_kwargs)
+    elif loss_name == "focal":
+        criterion = FocalLoss(gamma=float(tc.get("focal_gamma", 2.0)), **loss_kwargs)
+    else:
+        raise ValueError("train.loss must be cross_entropy or focal")
     base_lr = float(oc.get("lr", 3.0e-4))
     backbone_lr = float(oc.get("backbone_lr", base_lr))
     head_lr = float(oc.get("head_lr", base_lr))

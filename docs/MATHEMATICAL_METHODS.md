@@ -195,8 +195,11 @@ must be used only after the model and settings are fixed.
 The notebook comparison and packaged trainer are distinct runs. The comparison
 uses batch size 16, model-specific input sizes, and the above 10-epoch protocol.
 The default packaged config uses the `convnext_tiny.fb_in22k_ft_in1k` model,
-224-pixel input, and batch size 32. Do not transfer the comparison score to the
-packaged checkpoint or describe the packaged run as the validation winner.
+224-pixel input, and batch size 32. Its seed is 42 and the current trainer applies
+deterministic-algorithm settings where supported. This config describes future runs;
+no matching packaged checkpoint/history is archived in this repository snapshot. Do
+not transfer comparison scores to a packaged checkpoint or describe the packaged
+pipeline as the validation winner.
 
 ## 4. Evaluation metrics in this repository
 
