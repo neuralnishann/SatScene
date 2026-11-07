@@ -16,6 +16,5 @@ a PowerPoint presentation and a recording; this outline is not a substitute for 
 | 7. Limits and next steps | 0:30 | Explain that the comparison results are validation-only and the archived test artifact has unknown model/checkpoint provenance. Do not tune on the already exposed test example; evaluate a selected comparison checkpoint on a fresh test set. |
 
 Before recording, use the archived comparison metrics in `runs/README.md`. The test
-example's model/checkpoint identity is not recorded. Replace any stale historical figures in the local `paper/main.pdf`,
-confirm the final slide file uses the assignment's required filename, and add the video URL
-to `surname_ha1_video.txt`.
+example's model/checkpoint identity is not recorded. Confirm the final slide file uses
+the assignment's required filename, and add the video URL to `surname_ha1_video.txt`.

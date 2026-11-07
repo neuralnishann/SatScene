@@ -1,6 +1,6 @@
 """Regenerate result figures from results/training_log.json.
 
-    python scripts/make_figures.py            # writes results/figures/*.png and paper/figures/*.pdf
+    python scripts/make_figures.py            # writes results/figures/*.png
 """
 import json
 import os
@@ -29,9 +29,9 @@ lo, hi = wilson_interval(round(best / 100 * n_val), n_val)
 
 
 def save(fig, name):
-    for d, ext in (("results/figures", "png"), ("paper/figures", "pdf")):
-        os.makedirs(os.path.join(ROOT, d), exist_ok=True)
-        fig.savefig(os.path.join(ROOT, d, f"{name}.{ext}"), bbox_inches="tight")
+    output_dir = os.path.join(ROOT, "results", "figures")
+    os.makedirs(output_dir, exist_ok=True)
+    fig.savefig(os.path.join(output_dir, f"{name}.png"), bbox_inches="tight")
     plt.close(fig)
 
 

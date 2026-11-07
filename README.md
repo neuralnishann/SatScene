@@ -11,7 +11,6 @@
 [<img alt="MIT license" src="https://img.shields.io/badge/license-MIT-brightgreen">](LICENSE)
 [<img alt="Python 3.10 or later" src="https://img.shields.io/badge/python-%3E%3D3.10-yellow">](pyproject.toml)
 [<img alt="1,000 images and 14 classes" src="https://img.shields.io/badge/dataset-1%2C000%20images%20%7C%2014%20classes-purple">](#2-dataset-and-label-construction)
-[<img alt="Research paper PDF" src="https://img.shields.io/badge/paper-PDF-red">](paper/main.pdf)
 [<img alt="Citation metadata" src="https://img.shields.io/badge/citation-CFF-informational">](CITATION.cff)
 
 </div>
@@ -25,7 +24,6 @@
 | Dependencies | [`pyproject.toml`](pyproject.toml), [`requirements.txt`](requirements.txt); lower bounds, no lockfile |
 | Dataset | Remote Sensing Satellite Images; 1,000 RGB images, 14 classes |
 | Data splits | 700 train / 200 validation / 100 test |
-| Paper source | [LaTeX](paper/main.tex) |
 
 ## Abstract
 
@@ -43,7 +41,6 @@ matching dataset, checkpoints, and software environment, which are not fully arc
 **Keywords —** remote sensing; satellite imagery; scene classification; transfer
 learning; ConvNeXt; Swin Transformer; DINOv2; decision support
 
-**Paper figures:** [view the figures](paper/figures/) ·
 **Dataset provenance:** [source and export details](resources/README.md) ·
 **Software citation:** [CITATION.cff](CITATION.cff)
 
@@ -313,8 +310,8 @@ describes the archived notebook comparison; the command-line trainer is a relate
 but separate configurable implementation. Each algorithm was checked against its
 source implementation as listed in the code-correspondence table below.
 The pseudocode is set in display mathematics so subscripts, superscripts, fractions,
-summations, and square roots render in GitHub's math view; the paper PDF contains
-boxed `algorithm` floats for publication-style pagination.
+summations, and square roots render in GitHub's math view. The complete algorithms
+are also described in [`docs/MATHEMATICAL_METHODS.md`](docs/MATHEMATICAL_METHODS.md).
 
 #### Algorithm 1 — Convert object annotations to image labels
 
@@ -618,8 +615,7 @@ $$
 
 Further block-level derivations for GELU, SwinV2 scaled-cosine attention,
 Transformer residual blocks, empirical risk, optimization, and evaluation are
-in [`docs/MATHEMATICAL_METHODS.md`](docs/MATHEMATICAL_METHODS.md) and
-[`paper/main.tex`](paper/main.tex).
+in [`docs/MATHEMATICAL_METHODS.md`](docs/MATHEMATICAL_METHODS.md).
 
 ### 3.5 Improving the method for this task
 
@@ -1013,7 +1009,6 @@ because of their size.
 | `configs/default.yaml` | Packaged ConvNeXt-Tiny configuration |
 | `configs/convnextv2_finetune.yaml` | Separate ConvNeXtV2 tuning candidate |
 | `notebooks/` | Three-model comparison workflow |
-| `paper/main.tex`, `paper/main.pdf`, `paper/figures/` | Research paper source, compiled PDF, and figures |
 | `runs/` | Three-model validation and test results; see [`runs/README.md`](runs/README.md) |
 | `results/` | Historical unseeded notebook log; see [`results/README.md`](results/README.md) |
 | `iodata/` | Sample input and historical test-output example |

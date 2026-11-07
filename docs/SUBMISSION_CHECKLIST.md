@@ -19,9 +19,6 @@
 - [ ] Open the generated PowerPoint in PowerPoint, review its rendering, personalize the
   filename for the actual group/topic naming rule, and replace the demo slide text with
   the chosen live-demo capture if needed.
-- [ ] Rebuild `paper/main.pdf` from the updated `paper/main.tex`. The existing PDF is stale
-  and still reports that the test split was not evaluated. The `paper/` directory is
-  ignored by Git, so include the updated report source and PDF in the final archive.
 - [ ] Establish the provenance of the historical 86%-accuracy test evaluation. Do not attribute it to the three archived comparison checkpoints or tune on the already-inspected test split; evaluate a selected comparison model on a fresh test set.
 - [x] Run the unit-test suite in an environment with pytest installed: 14 passed.
 - [ ] Assemble the required single ZIP with root folder

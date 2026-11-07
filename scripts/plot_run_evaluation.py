@@ -14,7 +14,7 @@ RUNS = {
     "SwinV2-Tiny": ("swinv2_tiny_window8", "#D55E00"),
     "DINOv2 ViT-S/14": ("dinov2_vit_small_patch14", "#009E73"),
 }
-OUTPUT = ROOT / "paper" / "figures" / "run_evaluation_dashboard.svg"
+OUTPUT = ROOT / "results" / "figures" / "run_evaluation_dashboard.svg"
 WIDTH, HEIGHT = 1740, 1120
 
 
