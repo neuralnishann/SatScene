@@ -1,8 +1,9 @@
-Dataset: Remote Sensing Data, Roboflow Universe export, version 2
-Workspace/project: image-captioning-for-remote-sensingdata-0zids/remote-sensing-data
-Source URL: https://universe.roboflow.com/image-captioning-for-remote-sensingdata-0zids/remote-sensing-data/dataset/2
-Upstream export license shown in data.yaml: CC BY 4.0
-Original Kaggle dataset: https://www.kaggle.com/datasets/umeradnaan/remote-sensing-satellite-images
+Dataset: Remote Sensing Data, Roboflow Universe, version 2
+Source: https://universe.roboflow.com/image-captioning-for-remote-sensingdata-0zids/remote-sensing-data/dataset/2
+Exported: 2024-07-27
+Format: YOLOv8; 1,000 images
+License reported in the downloaded export metadata: CC BY 4.0
+Dataset project attribution: Remote Sensing Data, provided by a Roboflow Universe user
 
-Attribution: Image-captioning-for-remote-sensingdata-0zids, Roboflow Universe.
-Verify the current license and attribution terms at the source before redistribution.
+The export metadata does not independently verify the provenance or license of the
+underlying imagery. Check the source and applicable terms before reuse or redistribution.
