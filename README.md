@@ -969,7 +969,11 @@ python -m satscene.app --config configs/default.yaml \
   runs/dinov2_vit_small_patch14/best_model.pth
 
 # Optional native macOS interface
-python -m satscene.desktop --config configs/default.yaml
+python -m satscene.desktop --config configs/default.yaml \
+  --compare-checkpoints \
+  runs/convnextv2_tiny/best_model.pth \
+  runs/swinv2_tiny_window8/best_model.pth \
+  runs/dinov2_vit_small_patch14/best_model.pth
 
 # Complete unit test suite
 python -m pytest -q

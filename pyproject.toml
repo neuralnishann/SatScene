@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+presentation = ["python-pptx>=1.0"]
 
 [project.scripts]
 satscene = "satscene.app:main"

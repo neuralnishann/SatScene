@@ -100,16 +100,6 @@ python -m satscene.desktop --config configs/default.yaml \
   --checkpoint runs/convnextv2_tiny/best_model.pth
 ```
 
-```bash
-python -m satscene.desktop --config configs/default.yaml \
-  --checkpoint runs/convnextv2_tiny/best_model.pth
-```
-
-```bash
-python -m satscene.desktop --config configs/default.yaml \
-  --checkpoint runs/convnextv2_tiny/best_model.pth
-```
-
 Change the checkpoint path to use either of the other comparison models. The desktop
 app accepts an image by file picker or drag and drop. Both interfaces load model
 architecture and image size from checkpoint metadata.

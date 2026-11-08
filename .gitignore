@@ -1,4 +1,6 @@
+/docs/
 /paper/
+/papers/
 .venv/
 __pycache__/
 *.py[cod]
