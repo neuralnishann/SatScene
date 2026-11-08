@@ -1,9 +1,11 @@
 /docs/
 /paper/
 /papers/
+/scripts/make_presentation.py
+/scripts/make_ai_declaration_pdf.py
 .venv/
 __pycache__/
-*.py[cod]
+*.py[cod]S
 .pytest_cache/
 data/
 /runs/*.pth
